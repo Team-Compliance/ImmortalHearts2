@@ -156,7 +156,7 @@ local function renderingHearts(player,playeroffset)
 			ImmortalSplash.Color = Color(1,1,1,transperancy)
 		end]]
 		ImmortalSplash:Play(anim, true)
-		local spritename,glowname = "gfx/ui/ui_remix_hearts","gfx/ui/ui_heart_glow"
+		local spritename,glowname = "gfx/ui/ui_remix_hearts", "gfx/ui/ui_remix_hearts"
 		if mod.optionNum == 2 then
 			spritename,glowname = spritename.."_aladar",glowname.."_aladar"
 		end
@@ -256,7 +256,7 @@ function mod:ImmortalBlock(entity, amount, flag, source, cooldown)
 			if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B or player:GetPlayerType() == PlayerType.PLAYER_ESAU
 			or player:GetPlayerType() == PlayerType.PLAYER_JACOB then
 				player:GetOtherTwin():ResetDamageCooldown()
-				player:GetOtherTwin():SetMinDamageCooldown(20)		
+				player:GetOtherTwin():SetMinDamageCooldown(60)		
 			end
 		end
 		return false
@@ -321,7 +321,7 @@ function mod:ImmortalHeal()
 		if not (data.ComplianceImmortalHeart % 2 == 0) then
 			ImmortalEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, 903, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect()
 			ImmortalEffect:GetSprite().Offset = Vector(0, -22)
-			SFXManager():Play(SoundEffect.SOUND_HOLY, 1, 0, false, 1.25)
+			SFXManager():Play(Isaac.GetSoundIdByName("immortal"),1,0)
 			data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + 1
 			player:AddSoulHearts(1)
 		end
