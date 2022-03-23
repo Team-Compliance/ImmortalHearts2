@@ -109,17 +109,21 @@ local pauseColorTimer = 0
 
 local function renderingHearts(player,playeroffset)
 	local data = mod:GetData(player)
-	local isForgotten = player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN and 1 or 0
+	local pType = player:GetPlayerType()
+	local isForgotten = pType == PlayerType.PLAYER_THEFORGOTTEN and 1 or 0
 	local transperancy = 1
 	local isTotalEven = data.ComplianceImmortalHeart % 2 == 0
 	local level = game:GetLevel()
-	if player:GetPlayerType() == PlayerType.PLAYER_JACOB2_B or player:GetEffects():HasNullEffect(NullItemID.ID_LOST_CURSE) or isForgotten == 1 then
+	if pType == PlayerType.PLAYER_JACOB2_B or player:GetEffects():HasNullEffect(NullItemID.ID_LOST_CURSE) or isForgotten == 1 then
 		transperancy = 0.3
 	end
 	if isForgotten == 1 then
 		player = player:GetSubPlayer()
 	end
 	local heartIndex = math.ceil(data.ComplianceImmortalHeart/2) - 1
+	local goldHearts = player:GetGoldenHearts()
+	local getMaxHearts = player:GetEffectiveMaxHearts() + (player:GetSoulHearts() + player:GetSoulHearts() % 2)
+	local eternalHeart = player:GetEternalHearts()
 	for i=0, heartIndex do
 		local ImmortalSplash = Sprite()
 		ImmortalSplash:Load("gfx/ui/ui_remix_hearts.anm2",true)
@@ -143,6 +147,17 @@ local function renderingHearts(player,playeroffset)
 				anim = "ImmortalHeartHalf"
 			end
 		end
+		if player:GetEffectiveMaxHearts() == 0 and heartIndex == (math.ceil(player:GetSoulHearts()/2) - 1)
+		and eternalHeart > 0 then
+			anim = anim.."Eternal"
+		end
+		if goldHearts > 0 then
+			anim = anim.."Gold"
+		end
+		if i == 0 and player:GetEffects():HasCollectibleEffect(CollectibleType.COLLECTIBLE_HOLY_MANTLE)
+		and getMaxHearts == player:GetHeartLimit() then
+			anim = anim.."Mantle"
+		end
 				
 		ImmortalSplash.Color = Color(1,1,1,transperancy)
 		--[[local rendering = ImmortalSplash.Color.A > 0.1 or game:GetFrameCount() < 1
@@ -156,31 +171,35 @@ local function renderingHearts(player,playeroffset)
 			ImmortalSplash.Color = Color(1,1,1,transperancy)
 		end]]
 		ImmortalSplash:Play(anim, true)
-		local spritename,glowname = "gfx/ui/ui_remix_hearts", "gfx/ui/ui_remix_hearts"
+		local spritename = "gfx/ui/ui_remix_hearts"
 		if mod.optionNum == 2 then
-			spritename,glowname = spritename.."_aladar",glowname.."_aladar"
+			spritename = spritename.."_aladar"
 		end
 		if mod.optionNum == 3 then
-			spritename,glowname = spritename.."_peas",glowname.."_peas"
+			spritename = spritename.."_peas"
 		end
 		if mod.optionNum == 4 then
-			spritename,glowname = spritename.."_beautiful",glowname.."_beautiful"
+			spritename = spritename.."_beautiful"
 		end
 		if mod.optionNum == 5 then 
-			spritename,glowname = spritename.."_goncholito",glowname.."_goncholito"
+			spritename = spritename.."_goncholito"
 		end
 		if mod.optionNum == 6 then
-			spritename,glowname = spritename.."_flashy",glowname.."_flashy"
+			spritename = spritename.."_flashy"
 		end
 		if mod.optionNum == 7 then
-			spritename,glowname = spritename.."_bettericons",glowname.."_betterions"
+			spritename = spritename.."_bettericons"
 		end
 		if mod.optionNum == 8 then
-			spritename,glownamw = spritename.."_eternalupdate",glowname.."eternalupdate"
+			spritename = spritename.."_eternalupdate"
 		end
-		spritename, glowname = spritename..".png", glowname..".png"
-		ImmortalSplash:ReplaceSpritesheet(0,spritename)
-		ImmortalSplash:ReplaceSpritesheet(1,glowname)
+		if mod.optionNum == 9 then
+			spritename = spritename.."_duxi"
+		end
+		spritename = spritename..".png"
+		for j = 0,4 do
+			ImmortalSplash:ReplaceSpritesheet(j,spritename)
+		end
 		ImmortalSplash:LoadGraphics()
 		ImmortalSplash.FlipX = playeroffset == 5
 		ImmortalSplash:Render(Vector(offset.X, offset.Y), Vector(0,0), Vector(0,0))
@@ -376,6 +395,9 @@ function mod:SpriteChange(entity)
 		end
 		if mod.optionNum == 7 then
 			spritename = spritename.."_bettericons"
+		end
+		if mod.optionNum == 9 then
+			spritename = spritename.."_duxi"
 		end
 		spritename = spritename..".png"
 		for i = 0,2 do
