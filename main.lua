@@ -2,17 +2,16 @@ ComplianceImmortal = RegisterMod("Compliance Immortal Hearts", 1)
 local mod = ComplianceImmortal
 local game = Game()
 local json = require("json") 
-local IHDesc =  "{{ImmortalHeartIcon}} Holy heart that regenerates upon completing a room in which the player received damage#{{ImmortalHeartIcon}} Invincibility frames are reduced"
-local IHDescSpa = "{{ImmortalHeartIcon}} Corazón especial que se regenera al completar una sala si es que recibió daño#{{ImmortalHeartIcon}} El tiempo de invencibilidad al recibir daño se reduce"
-local IHDescRu = "{{ImmortalHeartIcon}} Святое сердце, которое восстанавливается после зачистки комнаты, в которой игрок получил урон#{{ImmortalHeartIcon}} Время неуязвимости после урона уменьшено"
+local IHDesc =  "{{ImmortalHeart}} Holy heart that regenerates upon completing a room in which the player received damage#{{ImmortalHeart}} Invincibility frames are reduced"
+local IHDescSpa = "{{ImmortalHeart}} Corazón especial que se regenera al completar una sala si es que recibió daño#{{ImmortalHeart}} El tiempo de invencibilidad al recibir daño se reduce"
+local IHDescRu = "{{ImmortalHeart}} Святое сердце, которое восстанавливается после зачистки комнаты, в которой игрок получил урон#{{ImmortalHeart}} Время неуязвимости после урона уменьшено"
 
 if EID then
---EID:addIcon(shortcut, animationName, animationFrame, width, height, leftOffset, topOffset, spriteObject)
-EID:setModIndicatorName("Immortal Heart")
+	EID:setModIndicatorName("Immortal Heart")
 	local iconSprite = Sprite()
 	iconSprite:Load("gfx/eid_icon_immortal_hearts.anm2", true)
-	EID:addIcon("ImmortalHeartIcon", "Immortal Heart Icon", 0, 11, 10, -1, -1, iconSprite)
-	EID:setModIndicatorIcon("ImmortalHeartIcon")
+	EID:addIcon("ImmortalHeart", "Immortal Heart Icon", 0, 10, 9, 0, 1, iconSprite)
+	EID:setModIndicatorIcon("ImmortalHeart")
 	EID:addEntity(5, 10, 902, "Immortal Heart", IHDesc, "en_us")
 	EID:addEntity(5, 10, 902, "Corazón Inmortal", IHDescSpa, "spa")
 	EID:addEntity(5, 10, 902, "Бессмертное сердце", IHDescRu, "ru")
@@ -83,9 +82,9 @@ function mod:OnLoad(isLoading)
 		
 		if EID then
 			if mod.optionContrition == 1 then -- Has to be here because of save data
-				EID:addCollectible(601, "↑ {{Tears}} +0.7 Tears up#{{ImmortalHeartIcon}} +1 Immortal Heart#{{AngelDevilChance}} Allows both Devil and Angel deals to be taken#Taking Red Heart damage doesn't reduce Devil/Angel Room chance as much", "Act of contrition", "en_us")
-				EID:addCollectible(601, "↑ {{Tears}} Lágrimas +0.7#{{ImmortalHeartIcon}} +1 corazón inmortal#{{AngelDevilChance}} Permite que aparezcan salas del ángel aunque hayas hecho pactos con el diablo antes", "Acto de Contrición", "spa")
-				EID:addCollectible(601, "↑ {{Tears}} +0.7 к скорострельности#{{ImmortalHeartIcon}} +1 бессмертное сердце#{{AngelDevilChance}} Позволяет Ангельским комнатам появляться даже в том случае, если ранее была заключена сделка с Дьяволом#Получение урона красными сердцами не так сильно снижает шанс сделки","Покаяние","ru")
+				EID:addCollectible(601, "↑ {{Tears}} +0.7 Tears up#{{ImmortalHeart}} +1 Immortal Heart#{{AngelDevilChance}} Allows both Devil and Angel deals to be taken#Taking Red Heart damage doesn't reduce Devil/Angel Room chance as much", "Act of contrition", "en_us")
+				EID:addCollectible(601, "↑ {{Tears}} Lágrimas +0.7#{{ImmortalHeart}} +1 corazón inmortal#{{AngelDevilChance}} Permite que aparezcan salas del ángel aunque hayas hecho pactos con el diablo antes", "Acto de Contrición", "spa")
+				EID:addCollectible(601, "↑ {{Tears}} +0.7 к скорострельности#{{ImmortalHeart}} +1 бессмертное сердце#{{AngelDevilChance}} Позволяет Ангельским комнатам появляться даже в том случае, если ранее была заключена сделка с Дьяволом#Получение урона красными сердцами не так сильно снижает шанс сделки","Покаяние","ru")
 			end
 		end
 	end
