@@ -60,8 +60,11 @@ function mod:ImmortalHeartUpdate(entity, collider)
 						sfx:Play(immortalSfx,1,0)
 						player:AddSoulHearts(2)
 						local amount = 2
-						if data.ComplianceImmortalHeart == 0 and player:GetSoulHearts() % 2 ~= 0 then
-							amount = 1
+						if player:GetSoulHearts() % 2 ~= 0 then
+							player:AddSoulHearts(-1)
+							if data.ComplianceImmortalHeart % 2 ~= 0 then
+								amount = amount - 1 -- keep it even
+							end
 						end
 						data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + amount
 					end
@@ -251,34 +254,33 @@ end
 
 mod:AddCallback(ModCallbacks.MC_GET_SHADER_PARAMS, mod.onRender)
 
-function mod:ImmortalBlock(entity, amount, flag, source, cooldown)
+function mod:ImmortalBlock(entity, damage, flag, source, cooldown)
 	local player = entity:ToPlayer()
 	local data = mod:GetData(player)
 	player = player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN_B and player:GetOtherTwin() or player
-	if data.ComplianceImmortalHeart > 0 and flag & DamageFlag.DAMAGE_FAKE == 0 and not (( 
-	flag & DamageFlag.DAMAGE_RED_HEARTS == DamageFlag.DAMAGE_RED_HEARTS or player:HasTrinket(TrinketType.TRINKET_CROW_HEART)) and player:GetHearts() > 0) and
-	not (player:GetEffects():HasCollectibleEffect(NullItemID.ID_HOLY_CARD) or player:GetEffects():HasCollectibleEffect(CollectibleType.COLLECTIBLE_HOLY_MANTLE)) 
-	and (player:GetPlayerType() ~= PlayerType.PLAYER_THELOST and player:GetPlayerType() ~= PlayerType.PLAYER_THELOST_B
-	and player:GetPlayerType() ~= PlayerType.PLAYER_JACOB2_B and player:GetPlayerType() ~= PlayerType.PLAYER_THEFORGOTTEN) and
-	not (player:GetData().VoodooPin and player:GetData().VoodooPin.SwapedEnemy) then
-		if (data.ComplianceImmortalHeart % 2 ~= 0) then
-			sfx:Play(immortalBreakSfx,1,0)
-			local shatterSPR = Isaac.Spawn(EntityType.ENTITY_EFFECT, 904, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect():GetSprite()
-			shatterSPR.PlaybackSpeed = 2
-		end
-		data.ComplianceImmortalHeart = data.ComplianceImmortalHeart - 1
-		player:TakeDamage(1,DamageFlag.DAMAGE_FAKE,source,cooldown)
-		player:AddSoulHearts(-1)
-		if data.ComplianceImmortalHeart > 0 then
-			player:ResetDamageCooldown()
-			player:SetMinDamageCooldown(20)
-			if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B or player:GetPlayerType() == PlayerType.PLAYER_ESAU
-			or player:GetPlayerType() == PlayerType.PLAYER_JACOB then
-				player:GetOtherTwin():ResetDamageCooldown()
-				player:GetOtherTwin():SetMinDamageCooldown(60)		
+	if data.ComplianceImmortalHeart > 0 and damage > 0 then
+		if flag & DamageFlag.DAMAGE_FAKE == 0 then
+			if not ((flag & DamageFlag.DAMAGE_RED_HEARTS == DamageFlag.DAMAGE_RED_HEARTS or player:HasTrinket(TrinketType.TRINKET_CROW_HEART)) and player:GetHearts() > 0) then
+				if (data.ComplianceImmortalHeart % 2 ~= 0) then
+					sfx:Play(immortalBreakSfx,1,0)
+					local shatterSPR = Isaac.Spawn(EntityType.ENTITY_EFFECT, 904, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect():GetSprite()
+					shatterSPR.PlaybackSpeed = 2
+				end
+				data.ComplianceImmortalHeart = data.ComplianceImmortalHeart - 1
+				player:TakeDamage(1,DamageFlag.DAMAGE_FAKE,source,cooldown)
+				player:AddSoulHearts(-1)
+				if data.ComplianceImmortalHeart > 0 then
+					player:ResetDamageCooldown()
+					player:SetMinDamageCooldown(20)
+					if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B or player:GetPlayerType() == PlayerType.PLAYER_ESAU
+					or player:GetPlayerType() == PlayerType.PLAYER_JACOB then
+						player:GetOtherTwin():ResetDamageCooldown()
+						player:GetOtherTwin():SetMinDamageCooldown(60)		
+					end
+				end
+				return false
 			end
 		end
-		return false
 	end
 end
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, mod.ImmortalBlock, EntityType.ENTITY_PLAYER)
@@ -287,7 +289,7 @@ function mod:ActOfImmortal(player)
 	if not player:HasCollectible(CollectibleType.COLLECTIBLE_ACT_OF_CONTRITION) then return end
 	if mod.optionContrition ~= 1 then return end
 	local data = mod:GetData(player)
-
+	
 	if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B then
 		player = player:GetMainTwin()
 	end
@@ -295,16 +297,22 @@ function mod:ActOfImmortal(player)
 		player = player:GetSubPlayer()
 	end
 	
-	if player:GetCollectibleNum(CollectibleType.COLLECTIBLE_ACT_OF_CONTRITION) ~= data.ContritionCount then
-		player:AddSoulHearts(2)
+	if player:GetCollectibleNum(CollectibleType.COLLECTIBLE_ACT_OF_CONTRITION) == data.ContritionCount then
+		data.lastEternalHearts = player:GetEternalHearts()
+	end
+	data.ContritionCount = player:GetCollectibleNum(CollectibleType.COLLECTIBLE_ACT_OF_CONTRITION)
+	
+	if player:GetEternalHearts() > data.lastEternalHearts then
+		player:AddEternalHearts(-1)
+		
 		local amount = 2
-		if data.ComplianceImmortalHeart == 0 and player:GetSoulHearts() % 2 ~= 0 then
-			amount = 1
+		if player:GetSoulHearts() % 2 ~= 0 then
+			player:AddSoulHearts(-1)
+			if data.ComplianceImmortalHeart % 2 ~= 0 then
+				amount = amount - 1 -- keep it even
+			end
 		end
 		data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + amount
-		
-		player:AddEternalHearts(-1)
-		data.ContritionCount = player:GetCollectibleNum(CollectibleType.COLLECTIBLE_ACT_OF_CONTRITION)
 	end
 end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.ActOfImmortal)
