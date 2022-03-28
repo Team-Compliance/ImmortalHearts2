@@ -260,8 +260,6 @@ function mod:ImmortalBlock(entity, damage, flag, source, cooldown)
 	local data = mod:GetData(player)
 	player = player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN_B and player:GetOtherTwin() or player
 	if data.ComplianceImmortalHeart > 0 and damage > 0 then
-		print(flag)
-		print(data.ImmortalTakeDmg)
 		if not data.ImmortalTakeDmg and source.Type ~= EntityType.ENTITY_DARK_ESAU then
 			if flag & DamageFlag.DAMAGE_FAKE == 0 then
 				if not ((flag & DamageFlag.DAMAGE_RED_HEARTS == DamageFlag.DAMAGE_RED_HEARTS or player:HasTrinket(TrinketType.TRINKET_CROW_HEART)) and player:GetHearts() > 0) then
@@ -351,7 +349,6 @@ function mod:HeartHandling(player)
 			if (player:IsBoneHeart(ExtraHearts - 1)) or not player:IsBlackHeart(player:GetSoulHearts() - (1 - player:GetSoulHearts() % 2) - i * 2) then
 				for j = imHeartLastIndex, imHeartLastIndex - (heartIndex + 1) * 2, -2 do
 					player:RemoveBlackHeart(j)
-					print(j)
 				end
 				player:AddSoulHearts(-data.ComplianceImmortalHeart)
 				player:AddBlackHearts(data.ComplianceImmortalHeart)
