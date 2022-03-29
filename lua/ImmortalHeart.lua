@@ -27,6 +27,8 @@ local function CanOnlyHaveSoulHearts(player)
 	return false
 end
 
+local hearts
+
 function mod:ImmortalHeartUpdate(entity, collider)
 	if collider.Type == EntityType.ENTITY_PLAYER then
 		local player = collider:ToPlayer()
@@ -58,18 +60,25 @@ function mod:ImmortalHeartUpdate(entity, collider)
 						entity:Die()
 						entity.Velocity = Vector.Zero
 						sfx:Play(immortalSfx,1,0)
-						player:AddSoulHearts(2)
 						local amount = 2
 						if player:GetSoulHearts() % 2 ~= 0 then
-							player:AddSoulHearts(-1)
 							if data.ComplianceImmortalHeart % 2 ~= 0 then
 								amount = amount - 1 -- keep it even
 							end
+							player:AddSoulHearts(1)
+						else
+							player:AddBlackHearts(2)
 						end
 						data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + amount
 					end
 				end
 				return nil
+			elseif (player:GetEffectiveMaxHearts() + player:GetSoulHearts() == player:GetHeartLimit() - 1) and data.ComplianceImmortalHeart % 2 ~= 0 then
+				local heart = entity:ToPickup()
+				if  heart.SubType == HeartSubType.HEART_BLACK or heart.SubType == HeartSubType.HEART_HALF_SOUL 
+				or heart.SubType == HeartSubType.HEART_SOUL then
+					return false
+				end
 			end
 			if player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN then
 				player = player:GetSubPlayer()
@@ -84,7 +93,7 @@ end
 mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, mod.ImmortalHeartUpdate, PickupVariant.PICKUP_HEART)
 
 function mod:FullSoulHeartInit(pickup)
-	if pickup.SubType == HeartSubType.HEART_HALF_SOUL then
+	if pickup.SubType == HeartSubType.HEART_HALF_SOUL or pickup.SubType == HeartSubType.HEART_BLENDED then
 		local isImmortalHeart = false
 		for i = 0, game:GetNumPlayers() - 1 do
 			local data = mod:GetData(Isaac.GetPlayer(i))
@@ -93,7 +102,12 @@ function mod:FullSoulHeartInit(pickup)
 			end
 		end
 		if isImmortalHeart then
-			pickup:ToPickup():Morph(pickup.Type,pickup.Variant,HeartSubType.HEART_SOUL,true,true)
+			if pickup.SubType == HeartSubType.HEART_HALF_SOUL then
+				pickup:ToPickup():Morph(pickup.Type,pickup.Variant,HeartSubType.HEART_SOUL,true,true)
+			else
+				Isaac.Spawn(pickup.Type,pickup.Variant,HeartSubType.HEART_HALF,pickup.Position,Vector.Zero,nil)
+				pickup:Remove()
+			end
 		end
 	end
 end
