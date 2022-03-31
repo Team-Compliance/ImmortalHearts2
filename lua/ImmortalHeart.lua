@@ -4,6 +4,7 @@ local sfx = SFXManager()
 local immortalBreakSfx = Isaac.GetSoundIdByName("ImmortalHeartBreak")
 local immortalSfx = Isaac.GetSoundIdByName("immortal")
 local screenHelper = require("lua.screenhelper")
+local doulbeSoulHearts = Isaac.GetEntityVariantByName("Heart (double soul)")
 
 function mod:initData(player)
 	local data = mod:GetData(player)
@@ -93,7 +94,11 @@ end
 mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, mod.ImmortalHeartUpdate, PickupVariant.PICKUP_HEART)
 
 function mod:FullSoulHeartInit(pickup)
-	if pickup.SubType == HeartSubType.HEART_HALF_SOUL or pickup.SubType == HeartSubType.HEART_BLENDED then
+	if pickup.Variant == PickupVariant.PICKUP_HEART and (pickup.SubType == HeartSubType.HEART_HALF_SOUL or pickup.SubType == HeartSubType.HEART_BLENDED) or 
+	(RepentancePlusMod and CustomPickups and (pickup.SubType == CustomPickups.TaintedHearts.HEART_BENIGHTED or pickup.SubType == CustomPickups.TaintedHearts.HEART_DESERTED))
+	or (doulbeSoulHearts and pickup.Variant == doulbeSoulHearts) then
+		
+		pickup = pickup:ToPickup()
 		local isImmortalHeart = false
 		for i = 0, game:GetNumPlayers() - 1 do
 			local data = mod:GetData(Isaac.GetPlayer(i))
@@ -102,16 +107,37 @@ function mod:FullSoulHeartInit(pickup)
 			end
 		end
 		if isImmortalHeart then
-			if pickup.SubType == HeartSubType.HEART_HALF_SOUL then
-				pickup:ToPickup():Morph(pickup.Type,pickup.Variant,HeartSubType.HEART_SOUL,true,true)
-			else
-				Isaac.Spawn(pickup.Type,pickup.Variant,HeartSubType.HEART_HALF,pickup.Position,Vector.Zero,nil)
+			if pickup.Variant == PickupVariant.PICKUP_HEART then
+				if pickup.SubType == HeartSubType.HEART_HALF_SOUL then
+					pickup:Morph(pickup.Type,pickup.Variant,HeartSubType.HEART_SOUL,true,true)
+				elseif pickup.SubType == HeartSubType.HEART_BLENDED then
+					pickup:Morph(pickup.Type,pickup.Variant,HeartSubType.HEART_HALF,true,true)
+				elseif RepentancePlusMod then
+					if pickup.SubType == CustomPickups.TaintedHearts.HEART_BENIGHTED or pickup.SubType == CustomPickups.TaintedHearts.HEART_DESERTED then
+						pickup:Morph(pickup.Type,pickup.Variant,HeartSubType.HEART_BLACK,true,true)
+					elseif pickup.SubType == CustomPickups.TaintedHearts.HEART_FETTERED then
+						pickup:Morph(pickup.Type,pickup.Variant,HeartSubType.HEART_SOUL,true,true)
+					end
+				end
+			elseif doulbeSoulHearts and pickup.Variant == doulbeSoulHearts and (pickup.SubType == 1 or pickup.SubType == 2) then
+				local convert = HeartSubType.HEART_SOUL
+				if pickup.SubType == 2 then
+					convert = HeartSubType.HEART_BLACK
+				end
+				local soul1 = Isaac.Spawn(pickup.Type,PickupVariant.PICKUP_HEART,convert,Isaac.GetFreeNearPosition(pickup.Position, 1),Vector.Zero,nil):ToPickup()
+				local soul2 = Isaac.Spawn(pickup.Type,PickupVariant.PICKUP_HEART,convert,Isaac.GetFreeNearPosition(pickup.Position, 1),Vector.Zero,nil):ToPickup()
+				if pickup:IsShopItem() then
+					soul1.AutoUpdatePrice = false
+					soul2.AutoUpdatePrice = false
+					soul1.Price = soul1.Price > 0 and math.ceil(pickup.Price / 2) or pickup.Price
+					soul2.Price = pickup.Price - soul1.Price
+				end
 				pickup:Remove()
 			end
 		end
 	end
 end
-mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, mod.FullSoulHeartInit, PickupVariant.PICKUP_HEART)
+mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, mod.FullSoulHeartInit)
 
 function mod:shouldDeHook()
 	local reqs = {
@@ -401,7 +427,7 @@ function mod:postPickupInit(pickup)
 	local rng = pickup:GetDropRNG()
 	if pickup.SubType == HeartSubType.HEART_ETERNAL then
 		if rng:RandomFloat() >= (1 - mod.optionChance / 100) then
-			pickup:Morph(pickup.Type, pickup.Variant, 902)
+			pickup:Morph(pickup.Type, pickup.Variant, 902,true,true)
 		end
 	end
 end
