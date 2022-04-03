@@ -467,6 +467,9 @@ function mod:SpriteChange(entity)
 		if mod.optionNum == 9 then
 			spritename = spritename.."_duxi"
 		end
+		if mod.optionNum == 10 then
+			spritename = spritename.."_sussy" 
+		end
 		spritename = spritename..".png"
 		for i = 0,2 do
 			sprite:ReplaceSpritesheet(i,spritename)

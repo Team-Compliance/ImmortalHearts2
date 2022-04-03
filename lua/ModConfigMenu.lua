@@ -15,6 +15,7 @@ mod.optionContrition = 1
 		[7] = "Better Icons", 
 		[8] = "Eternal Update",
 		[9] = "Re-color",
+		[10] = "Sussy",
     }
 
 if ModConfigMenu then
@@ -31,7 +32,7 @@ if ModConfigMenu then
             return mod.optionNum
         end,
         Minimum = 1,
-        Maximum = 9,
+        Maximum = 10,
         Display = function()
             return 'Use sprites: ' .. Options[mod.optionNum]
         end,
