@@ -5,6 +5,7 @@ local immortalBreakSfx = Isaac.GetSoundIdByName("ImmortalHeartBreak")
 local immortalSfx = Isaac.GetSoundIdByName("immortal")
 local screenHelper = require("lua.screenhelper")
 local doulbeSoulHearts = Isaac.GetEntityVariantByName("Heart (double soul)")
+local hearts
 
 function mod:initData(player)
 	local data = mod:GetData(player)
@@ -15,7 +16,6 @@ function mod:initData(player)
     	data.ImmortalCharge = 0
 	end
 end
-
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_INIT, mod.initData)
 
 local function CanOnlyHaveSoulHearts(player)
@@ -28,8 +28,6 @@ local function CanOnlyHaveSoulHearts(player)
 	return false
 end
 
-local hearts
-
 function mod:ImmortalHeartUpdate(entity, collider)
 	if collider.Type == EntityType.ENTITY_PLAYER then
 		local player = collider:ToPlayer()
@@ -39,7 +37,7 @@ function mod:ImmortalHeartUpdate(entity, collider)
 		local data = mod:GetData(player)
 		local player = player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN and player:GetSubPlayer() or player
 		if data.ComplianceImmortalHeart < (player:GetHeartLimit() - player:GetEffectiveMaxHearts()) then
-			if entity.SubType == 902 and data.ComplianceImmortalHeart < mod.optionImmortalNum * 2 then
+			if entity.SubType == 902 then
 				if player:GetPlayerType() == PlayerType.PLAYER_BETHANY then
 					player:AddSoulCharge(2)
 					data.ImmortalCharge = data.ImmortalCharge + 1
@@ -141,8 +139,6 @@ function mod:shouldDeHook()
 	}
 	return reqs[1] or reqs[2] or reqs[3]
 end
-
-local pauseColorTimer = 0
 
 local function renderingHearts(player,playeroffset)
 	local data = mod:GetData(player)
@@ -247,46 +243,36 @@ end
 function mod:onRender(shadername)
 	if shadername ~= "Immortal Hearts" then return end
 	if mod:shouldDeHook() then return end
-	local players = 0
 	local isJacobFirst = false
 	for i = 0, game:GetNumPlayers() - 1 do
-		if players < 4 then
-			local player = Isaac.GetPlayer(i)
-			local data = mod:GetData(player)
-			if players == 0 and player:GetPlayerType() == PlayerType.PLAYER_JACOB then
-				isJacobFirst = true
-			end
-			if (player:GetPlayerType() == PlayerType.PLAYER_LAZARUS_B or player:GetPlayerType() == PlayerType.PLAYER_LAZARUS2_B) then
-				if player:GetOtherTwin() then
-					if data.i and data.i == i then
-						data.i = nil
-					end
-					if not data.i then
-						local otherTData = mod:GetData(player:GetOtherTwin())
-						otherTData.i = i
-					end
-				elseif data.i then
+		local player = Isaac.GetPlayer(i)
+		local data = mod:GetData(player)
+		if i == 0 and player:GetPlayerType() == PlayerType.PLAYER_JACOB then
+			isJacobFirst = true
+		end
+		if (player:GetPlayerType() == PlayerType.PLAYER_LAZARUS_B or player:GetPlayerType() == PlayerType.PLAYER_LAZARUS2_B) then
+			if player:GetOtherTwin() then
+				if data.i and data.i == i then
 					data.i = nil
 				end
+				if not data.i then
+					local otherTData = mod:GetData(player:GetOtherTwin())
+					otherTData.i = i
+				end
+			elseif data.i then
+				data.i = nil
 			end
-			local playeroffset
-			local isIllusion = player:GetData().IllusionMod and player:GetData().IllusionMod.IsIllusion
-			if  player:GetPlayerType() ~= PlayerType.PLAYER_THESOUL_B and not isIllusion and not data.i then
-				if player:GetPlayerType() ~= PlayerType.PLAYER_ESAU then
-					players = players + 1
-					playeroffset = players
-				end
-				if player:GetPlayerType() == PlayerType.PLAYER_ESAU and isJacobFirst then
-					renderingHearts(player,5)	
-				elseif player:GetPlayerType() ~= PlayerType.PLAYER_ESAU then
-					renderingHearts(player,playeroffset)
-				end
+		end
+		if player:GetPlayerType() ~= PlayerType.PLAYER_THESOUL_B and not player.Parent and not data.i then
+			if player:GetPlayerType() == PlayerType.PLAYER_ESAU and isJacobFirst then
+				renderingHearts(player,5)	
+			elseif player:GetPlayerType() ~= PlayerType.PLAYER_ESAU then
+				renderingHearts(player,i+1)
 			end
 		end
 	end
 
 end
-
 mod:AddCallback(ModCallbacks.MC_GET_SHADER_PARAMS, mod.onRender)
 
 function mod:ImmortalBlock(entity, damage, flag, source, cooldown)
@@ -374,7 +360,6 @@ function mod:HeartHandling(player)
 		player = player:GetSubPlayer()
 	end
 	if data.ComplianceImmortalHeart > 0 then
-		data.ComplianceImmortalHeart = data.ComplianceImmortalHeart > mod.optionImmortalNum * 2 and mod.optionImmortalNum * 2 or data.ComplianceImmortalHeart
 		data.ComplianceImmortalHeart = data.ComplianceImmortalHeart > player:GetSoulHearts() and player:GetSoulHearts() or data.ComplianceImmortalHeart
 		local heartIndex = math.ceil(data.ComplianceImmortalHeart/2) - 1
 		for i=0, heartIndex do
@@ -402,7 +387,7 @@ function mod:ImmortalHeal()
 		if not (data.ComplianceImmortalHeart % 2 == 0) then
 			ImmortalEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, 903, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect()
 			ImmortalEffect:GetSprite().Offset = Vector(0, -22)
-			SFXManager():Play(Isaac.GetSoundIdByName("immortal"),1,0)
+			SFXManager():Play(immortalSfx,1,0)
 			data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + 1
 			player:AddSoulHearts(1)
 		end
@@ -414,19 +399,22 @@ function mod:ImmortalHeal()
 		end
 	end
 end
-
 mod:AddCallback(ModCallbacks.MC_PRE_SPAWN_CLEAN_AWARD, mod.ImmortalHeal)
 
-function mod:postPickupInit(pickup)
-	local rng = pickup:GetDropRNG()
-	if pickup.SubType == HeartSubType.HEART_ETERNAL then
-		if rng:RandomFloat() >= (1 - mod.optionChance / 100) then
-			pickup:Morph(pickup.Type, pickup.Variant, 902,true,true)
+function mod:preEntitySpawn(entityType, variant, subType, position, velocity, spawner, seed)
+	local rng = RNG()
+	if entityType == EntityType.ENTITY_PICKUP then
+		if variant == PickupVariant.PICKUP_HEART then
+			if subType == HeartSubType.HEART_ETERNAL then
+				rng:SetSeed(seed, 1)
+				if rng:RandomFloat() >= (1 - mod.optionChance / 100) then
+					return {entityType, variant, 902, seed}
+				end
+			end
 		end
 	end
 end
-
-mod:AddCallback(ModCallbacks.MC_POST_PICKUP_INIT, mod.postPickupInit, PickupVariant.PICKUP_HEART)
+mod:AddCallback(ModCallbacks.MC_PRE_ENTITY_SPAWN, mod.preEntitySpawn)
 
 function mod:DefaultWispInit(wisp)
 	local player = wisp.Player
