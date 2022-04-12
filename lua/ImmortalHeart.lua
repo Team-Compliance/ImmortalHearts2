@@ -40,27 +40,15 @@ function mod:ImmortalHeartUpdate(entity, collider)
 		local player = player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN and player:GetSubPlayer() or player
 		if data.ComplianceImmortalHeart < (player:GetHeartLimit() - player:GetEffectiveMaxHearts()) then
 			if entity.SubType == 902 and data.ComplianceImmortalHeart < mod.optionImmortalNum * 2 then
-				if (player:GetPlayerType() == PlayerType.PLAYER_THELOST or player:GetPlayerType() == PlayerType.PLAYER_THELOST_B) then
-					entity:GetSprite():Play("Collect", true)
-					entity:Die()
-					entity.Velocity = Vector.Zero
-					sfx:Play(immortalSfx,1,0)
-				elseif (player:GetPlayerType() == PlayerType.PLAYER_BETHANY) then
+				if player:GetPlayerType() == PlayerType.PLAYER_BETHANY then
 					player:AddSoulCharge(2)
 					data.ImmortalCharge = data.ImmortalCharge + 1
-					entity:GetSprite():Play("Collect", true)
-					entity:Die()
-					entity.Velocity = Vector.Zero
-					sfx:Play(immortalSfx,1,0)
-				else
+				elseif player:GetPlayerType() ~= PlayerType.PLAYER_THELOST and player:GetPlayerType() ~= PlayerType.PLAYER_THELOST_B then
+				
 					if player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN then
 						player = player:GetSubPlayer()
 					end
 					
-					entity:GetSprite():Play("Collect", true)
-					entity:Die()
-					entity.Velocity = Vector.Zero
-					sfx:Play(immortalSfx,1,0)
 					local amount = 2
 					if player:GetSoulHearts() % 2 ~= 0 then
 						if data.ComplianceImmortalHeart % 2 ~= 0 then
@@ -71,9 +59,13 @@ function mod:ImmortalHeartUpdate(entity, collider)
 						player:AddBlackHearts(2)
 					end
 					data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + amount
-					
 				end
-				return nil
+				
+				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
+				entity:GetSprite():Play("Collect", true)
+				entity:Die()
+				sfx:Play(immortalSfx,1,0)
+				return true
 			elseif (player:GetEffectiveMaxHearts() + player:GetSoulHearts() == player:GetHeartLimit() - 1) and data.ComplianceImmortalHeart % 2 ~= 0 then
 				local heart = entity:ToPickup()
 				if heart.SubType == HeartSubType.HEART_SOUL or (2^math.floor(player:GetSoulHearts()/2) == player:GetBlackHearts() and heart.SubType == HeartSubType.HEART_BLACK) then
@@ -81,18 +73,18 @@ function mod:ImmortalHeartUpdate(entity, collider)
 				else
 					player:AddBlackHearts(1)
 					player:AddSoulHearts(-1)
+					
+					heart.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
 					heart:GetSprite():Play("Collect", true)
 					heart:Die()
 					sfx:Play(SoundEffect.SOUND_UNHOLY,1,0)
-					heart.Velocity = Vector.Zero
-					return false
+					return true
 				end
 			end
 			
 		end
 	end
 end
-
 mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, mod.ImmortalHeartUpdate, PickupVariant.PICKUP_HEART)
 
 function mod:FullSoulHeartInit(pickup)
