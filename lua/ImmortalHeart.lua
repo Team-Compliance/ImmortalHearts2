@@ -38,7 +38,7 @@ function mod:ImmortalHeartUpdate(entity, collider)
 		end
 		local data = mod:GetData(player)
 		local player = player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN and player:GetSubPlayer() or player
-		if player:CanPickSoulHearts() then
+		if data.ComplianceImmortalHeart < (player:GetHeartLimit() - player:GetEffectiveMaxHearts()) then
 			if entity.SubType == 902 and data.ComplianceImmortalHeart < mod.optionImmortalNum * 2 then
 				if (player:GetPlayerType() == PlayerType.PLAYER_THELOST or player:GetPlayerType() == PlayerType.PLAYER_THELOST_B) then
 					entity:GetSprite():Play("Collect", true)
@@ -56,37 +56,39 @@ function mod:ImmortalHeartUpdate(entity, collider)
 					if player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN then
 						player = player:GetSubPlayer()
 					end
-					if player:GetEffectiveMaxHearts() + player:GetSoulHearts() < player:GetHeartLimit() then
-						entity:GetSprite():Play("Collect", true)
-						entity:Die()
-						entity.Velocity = Vector.Zero
-						sfx:Play(immortalSfx,1,0)
-						local amount = 2
-						if player:GetSoulHearts() % 2 ~= 0 then
-							if data.ComplianceImmortalHeart % 2 ~= 0 then
-								amount = amount - 1 -- keep it even
-							end
-							player:AddSoulHearts(1)
-						else
-							player:AddBlackHearts(2)
+					
+					entity:GetSprite():Play("Collect", true)
+					entity:Die()
+					entity.Velocity = Vector.Zero
+					sfx:Play(immortalSfx,1,0)
+					local amount = 2
+					if player:GetSoulHearts() % 2 ~= 0 then
+						if data.ComplianceImmortalHeart % 2 ~= 0 then
+							amount = amount - 1 -- keep it even
 						end
-						data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + amount
+						player:AddSoulHearts(1)
+					else
+						player:AddBlackHearts(2)
 					end
+					data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + amount
+					
 				end
 				return nil
 			elseif (player:GetEffectiveMaxHearts() + player:GetSoulHearts() == player:GetHeartLimit() - 1) and data.ComplianceImmortalHeart % 2 ~= 0 then
 				local heart = entity:ToPickup()
-				if  heart.SubType == HeartSubType.HEART_BLACK or heart.SubType == HeartSubType.HEART_HALF_SOUL 
-				or heart.SubType == HeartSubType.HEART_SOUL then
+				if heart.SubType == HeartSubType.HEART_SOUL or (2^math.floor(player:GetSoulHearts()/2) == player:GetBlackHearts() and heart.SubType == HeartSubType.HEART_BLACK) then
+					return false
+				else
+					player:AddBlackHearts(1)
+					player:AddSoulHearts(-1)
+					heart:GetSprite():Play("Collect", true)
+					heart:Die()
+					sfx:Play(SoundEffect.SOUND_UNHOLY,1,0)
+					heart.Velocity = Vector.Zero
 					return false
 				end
 			end
-			if player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN then
-				player = player:GetSubPlayer()
-			end
-			if player:GetEffectiveMaxHearts() + player:GetSoulHearts() >= player:GetHeartLimit() and data.ComplianceImmortalHeart > 0 then
-				return false
-			end
+			
 		end
 	end
 end
