@@ -9,18 +9,14 @@ local screenHelper = require("lua.screenhelper")
 
 function ComplianceImmortal.AddImmortalHearts(player, amount)
 	local data = mod:GetData(player)
-	if amount > 0 then
-		if player:GetSoulHearts() % 2 ~= 0 then
-			if ComplianceImmortal.GetImmortalHearts(player) % 2 ~= 0 then
-				data.ComplianceImmortalHeart = data.ComplianceImmortalHeart - 1
-			end
-			player:AddSoulHearts(-1)
-		end
-	end
 	if player:CanPickBlackHearts() or amount < 0 then
 		player:AddBlackHearts(amount)
 	end
-	data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + amount
+	if player:GetPlayerType() == PlayerType.PLAYER_BETHANY then
+		data.ImmortalCharge = data.ImmortalCharge + math.ceil(amount/2)
+	else
+		data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + amount
+	end
 end
 
 function ComplianceImmortal.GetImmortalHearts(player)
@@ -34,8 +30,7 @@ function ComplianceImmortal.HealImmortalHeart(player) -- returns true if success
 		ImmortalEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, 903, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect()
 		ImmortalEffect:GetSprite().Offset = Vector(0, -22)
 		SFXManager():Play(immortalSfx,1,0)
-		data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + 1
-		player:AddBlackHearts(1)
+		ComplianceImmortal.AddImmortalHearts(player, 1)
 		return true
 	end
 	return false
@@ -74,10 +69,7 @@ function mod:ImmortalHeartUpdate(entity, collider)
 		local player = player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN and player:GetSubPlayer() or player
 		if data.ComplianceImmortalHeart < (player:GetHeartLimit() - player:GetEffectiveMaxHearts()) then
 			if entity.SubType == HeartSubType.HEART_IMMORTAL then
-				if player:GetPlayerType() == PlayerType.PLAYER_BETHANY then
-					player:AddSoulCharge(2)
-					data.ImmortalCharge = data.ImmortalCharge + 1
-				elseif player:GetPlayerType() ~= PlayerType.PLAYER_THELOST and player:GetPlayerType() ~= PlayerType.PLAYER_THELOST_B then
+				if player:GetPlayerType() ~= PlayerType.PLAYER_THELOST and player:GetPlayerType() ~= PlayerType.PLAYER_THELOST_B then
 					ComplianceImmortal.AddImmortalHearts(player, 2)
 				end
 				
@@ -299,7 +291,7 @@ function mod:ActOfImmortal(player)
 	end
 	data.ContritionCount = player:GetCollectibleNum(CollectibleType.COLLECTIBLE_ACT_OF_CONTRITION)
 	
-	if player:GetEternalHearts() > data.lastEternalHearts then
+	if player:GetEternalHearts() ~= data.lastEternalHearts then
 		player:AddEternalHearts(-1)
 		
 		ComplianceImmortal.AddImmortalHearts(player, 2)
@@ -330,7 +322,6 @@ function mod:HeartHandling(player)
 			end
 		end
 		
-		-- code below makes sure there are no discrepencies in soul hearts and immortal heart count (for half soul heart shenanigans)
 		if player:GetSoulHearts() % 2 == 0 then
 			if ComplianceImmortal.GetImmortalHearts(player) % 2 ~= 0 then
 				data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + 1
