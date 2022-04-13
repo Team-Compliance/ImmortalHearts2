@@ -5,7 +5,6 @@ local immortalBreakSfx = Isaac.GetSoundIdByName("ImmortalHeartBreak")
 local immortalSfx = Isaac.GetSoundIdByName("immortal")
 local screenHelper = require("lua.screenhelper")
 local doulbeSoulHearts = Isaac.GetEntityVariantByName("Heart (double soul)")
-local hearts
 
 function mod:initData(player)
 	local data = mod:GetData(player)
@@ -64,19 +63,15 @@ function mod:ImmortalHeartUpdate(entity, collider)
 				entity:Die()
 				sfx:Play(immortalSfx,1,0)
 				return true
-			elseif (player:GetEffectiveMaxHearts() + player:GetSoulHearts() == player:GetHeartLimit() - 1) and data.ComplianceImmortalHeart % 2 ~= 0 then
+			else
 				local heart = entity:ToPickup()
-				if heart.SubType == HeartSubType.HEART_SOUL or (2^math.floor(player:GetSoulHearts()/2) == player:GetBlackHearts() and heart.SubType == HeartSubType.HEART_BLACK) then
-					return false
-				else
-					player:AddBlackHearts(1)
-					player:AddSoulHearts(-1)
-					
-					heart.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
-					heart:GetSprite():Play("Collect", true)
-					heart:Die()
-					sfx:Play(SoundEffect.SOUND_UNHOLY,1,0)
-					return true
+				if (heart.SubType == HeartSubType.HEART_SOUL or heart.SubType == HeartSubType.HEART_BLACK) then
+					if data.ComplianceImmortalHeart % 2 ~= 0 then
+						data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + 1
+						if (player:GetEffectiveMaxHearts() + player:GetSoulHearts() < player:GetHeartLimit() - 1) then
+							player:AddSoulHearts(-1)
+						end
+					end
 				end
 			end
 			
