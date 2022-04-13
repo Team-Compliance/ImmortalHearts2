@@ -6,15 +6,17 @@ local IHDesc =  "{{ImmortalHeart}} Holy heart that regenerates upon completing a
 local IHDescSpa = "{{ImmortalHeart}} Corazón especial que se regenera al completar una sala si es que recibió daño#{{ImmortalHeart}} El tiempo de invencibilidad al recibir daño se reduce"
 local IHDescRu = "{{ImmortalHeart}} Святое сердце, которое восстанавливается после зачистки комнаты, в которой игрок получил урон#{{ImmortalHeart}} Время неуязвимости после урона уменьшено"
 
+HeartSubType.HEART_IMMORTAL = 902
+
 if EID then
 	EID:setModIndicatorName("Immortal Heart")
 	local iconSprite = Sprite()
 	iconSprite:Load("gfx/eid_icon_immortal_hearts.anm2", true)
 	EID:addIcon("ImmortalHeart", "Immortal Heart Icon", 0, 10, 9, 0, 1, iconSprite)
 	EID:setModIndicatorIcon("ImmortalHeart")
-	EID:addEntity(5, 10, 902, "Immortal Heart", IHDesc, "en_us")
-	EID:addEntity(5, 10, 902, "Corazón Inmortal", IHDescSpa, "spa")
-	EID:addEntity(5, 10, 902, "Бессмертное сердце", IHDescRu, "ru")
+	EID:addEntity(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_IMMORTAL, "Immortal Heart", IHDesc, "en_us")
+	EID:addEntity(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_IMMORTAL, "Corazón Inmortal", IHDescSpa, "spa")
+	EID:addEntity(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_IMMORTAL, "Бессмертное сердце", IHDescRu, "ru")
 end
 
 include("lua/ModConfigMenu.lua")
@@ -27,7 +29,7 @@ if MinimapAPI then
     local ImmortalSprite = Sprite()
     ImmortalSprite:Load("gfx/ui/immortalheart_icon.anm2", true)
     MinimapAPI:AddIcon("ImmortalIcon", ImmortalSprite, "ImmortalHeart", 0)
-	MinimapAPI:AddPickup(902, "ImmortalIcon", 5, 10, 902, MinimapAPI.PickupNotCollected, "hearts", 13000)
+	MinimapAPI:AddPickup(HeartSubType.HEART_IMMORTAL, "ImmortalIcon", EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_IMMORTAL, MinimapAPI.PickupNotCollected, "hearts", 13000)
 end
 
 function onStart(_, bool)

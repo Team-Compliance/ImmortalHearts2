@@ -4,7 +4,31 @@ local sfx = SFXManager()
 local immortalBreakSfx = Isaac.GetSoundIdByName("ImmortalHeartBreak")
 local immortalSfx = Isaac.GetSoundIdByName("immortal")
 local screenHelper = require("lua.screenhelper")
-local doulbeSoulHearts = Isaac.GetEntityVariantByName("Heart (double soul)")
+
+-- API functions --
+
+function ComplianceImmortal.AddImmortalHearts(player, amount)
+	local data = mod:GetData(player)
+	if amount > 0 then
+		if player:GetSoulHearts() % 2 ~= 0 then
+			if ComplianceImmortal.GetImmortalHearts(player) % 2 ~= 0 then
+				data.ComplianceImmortalHeart = data.ComplianceImmortalHeart - 1
+			end
+			player:AddSoulHearts(-1)
+		end
+	end
+	if player:CanPickBlackHearts() or amount < 0 then
+		player:AddBlackHearts(amount)
+	end
+	data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + amount
+end
+
+function ComplianceImmortal.GetImmortalHearts(player)
+	local data = mod:GetData(player)
+	return data.ComplianceImmortalHeart
+end
+
+---
 
 function mod:initData(player)
 	local data = mod:GetData(player)
@@ -36,26 +60,12 @@ function mod:ImmortalHeartUpdate(entity, collider)
 		local data = mod:GetData(player)
 		local player = player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN and player:GetSubPlayer() or player
 		if data.ComplianceImmortalHeart < (player:GetHeartLimit() - player:GetEffectiveMaxHearts()) then
-			if entity.SubType == 902 then
+			if entity.SubType == HeartSubType.HEART_IMMORTAL then
 				if player:GetPlayerType() == PlayerType.PLAYER_BETHANY then
 					player:AddSoulCharge(2)
 					data.ImmortalCharge = data.ImmortalCharge + 1
 				elseif player:GetPlayerType() ~= PlayerType.PLAYER_THELOST and player:GetPlayerType() ~= PlayerType.PLAYER_THELOST_B then
-				
-					if player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN then
-						player = player:GetSubPlayer()
-					end
-					
-					local amount = 2
-					if player:GetSoulHearts() % 2 ~= 0 then
-						if data.ComplianceImmortalHeart % 2 ~= 0 then
-							amount = amount - 1 -- keep it even
-						end
-						player:AddSoulHearts(1)
-					else
-						player:AddBlackHearts(2)
-					end
-					data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + amount
+					ComplianceImmortal.AddImmortalHearts(player, 2)
 				end
 				
 				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
@@ -63,18 +73,7 @@ function mod:ImmortalHeartUpdate(entity, collider)
 				entity:Die()
 				sfx:Play(immortalSfx,1,0)
 				return true
-			else
-				local heart = entity:ToPickup()
-				if (heart.SubType == HeartSubType.HEART_SOUL or heart.SubType == HeartSubType.HEART_BLACK) then
-					if data.ComplianceImmortalHeart % 2 ~= 0 then
-						data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + 1
-						if (player:GetEffectiveMaxHearts() + player:GetSoulHearts() < player:GetHeartLimit() - 1) then
-							player:AddSoulHearts(-1)
-						end
-					end
-				end
 			end
-			
 		end
 	end
 end
@@ -290,15 +289,7 @@ function mod:ActOfImmortal(player)
 	if player:GetEternalHearts() > data.lastEternalHearts then
 		player:AddEternalHearts(-1)
 		
-		local amount = 2
-		if player:GetSoulHearts() % 2 ~= 0 then
-			player:AddSoulHearts(-1)
-			if data.ComplianceImmortalHeart % 2 ~= 0 then
-				amount = amount - 1 -- keep it even
-			end
-		end
-		player:AddSoulHearts(amount)
-		data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + amount
+		ComplianceImmortal.AddImmortalHearts(player, 2)
 	end
 end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.ActOfImmortal)
@@ -357,7 +348,7 @@ function mod:preEntitySpawn(entityType, variant, subType, position, velocity, sp
 			if subType == HeartSubType.HEART_ETERNAL then
 				rng:SetSeed(seed, 1)
 				if rng:RandomFloat() >= (1 - mod.optionChance / 100) then
-					return {entityType, variant, 902, seed}
+					return {entityType, variant, HeartSubType.HEART_IMMORTAL, seed}
 				end
 			end
 		end
@@ -380,7 +371,7 @@ end
 mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, mod.DefaultWispInit, FamiliarVariant.WISP)
 
 function mod:SpriteChange(entity)
-	if entity.SubType == 902 then
+	if entity.SubType == HeartSubType.HEART_IMMORTAL then
 		local sprite = entity:GetSprite()
 		local spritename = "gfx/items/pick ups/pickup_001_remix_heart"
 		if mod.optionNum == 2 then
