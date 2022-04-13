@@ -58,7 +58,6 @@ function mod:OnSave(isSaving)
 	end
 	save.SpriteStyle = mod.optionNum
 	save.AppearanceChance = mod.optionChance
-	save.IHAmount = mod.optionImmortalNum
 	save.ActOfContritionChance = mod.optionContrition
 	save.showAchievement = true
 	mod:SaveData(json.encode(save))
@@ -80,7 +79,6 @@ function mod:OnLoad(isLoading)
 		mod.optionNum = save.SpriteStyle and save.SpriteStyle or 1
 		mod.optionChance = save.AppearanceChance and save.AppearanceChance or 20
 		mod.optionContrition = save.ActOfContritionChance and save.ActOfContritionChance or 1
-		mod.optionImmortalNum = save.IHAmount and save.IHAmount or 18
 		
 		if EID then
 			if mod.optionContrition == 1 then -- Has to be here because of save data
