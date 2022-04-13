@@ -2,9 +2,6 @@ ComplianceImmortal = RegisterMod("Compliance Immortal Hearts", 1)
 local mod = ComplianceImmortal
 local game = Game()
 local json = require("json") 
-local IHDesc =  "{{ImmortalHeart}} Holy heart that regenerates upon completing a room in which the player received damage#{{ImmortalHeart}} Invincibility frames are reduced"
-local IHDescSpa = "{{ImmortalHeart}} Corazón especial que se regenera al completar una sala si es que recibió daño#{{ImmortalHeart}} El tiempo de invencibilidad al recibir daño se reduce"
-local IHDescRu = "{{ImmortalHeart}} Святое сердце, которое восстанавливается после зачистки комнаты, в которой игрок получил урон#{{ImmortalHeart}} Время неуязвимости после урона уменьшено"
 
 HeartSubType.HEART_IMMORTAL = 902
 
@@ -14,9 +11,6 @@ if EID then
 	iconSprite:Load("gfx/eid_icon_immortal_hearts.anm2", true)
 	EID:addIcon("ImmortalHeart", "Immortal Heart Icon", 0, 10, 9, 0, 1, iconSprite)
 	EID:setModIndicatorIcon("ImmortalHeart")
-	EID:addEntity(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_IMMORTAL, "Immortal Heart", IHDesc, "en_us")
-	EID:addEntity(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_IMMORTAL, "Corazón Inmortal", IHDescSpa, "spa")
-	EID:addEntity(EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_IMMORTAL, "Бессмертное сердце", IHDescRu, "ru")
 end
 
 include("lua/ModConfigMenu.lua")

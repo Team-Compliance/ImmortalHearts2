@@ -85,38 +85,5 @@ if ModConfigMenu then
 		end,
 		Info = "Replaces Act of Contrition's Eternal Heart with an Immortal Heart, like in Antibirth."
 	})
-
-
-    if EID then
-        ModConfigMenu.AddSetting(ImmortalMCM, "Settings",
-		{
-			Type = ModConfigMenu.OptionType.BOOLEAN,
-			CurrentSetting = function()
-				local show = true
-                if EID.IgnoredEntities["5.10.902"] then
-                    show = false
-                end
-                return show
-			end,
-			Default = true,
-			Display = function()
-				local displaystring = 'Description: '
-				if EID.IgnoredEntities["5.10.902"] then
-					displaystring = displaystring.."Hide"
-				else
-					displaystring = displaystring.."Show"
-				end
-				return displaystring
-			end,
-			OnChange = function(value)
-                if value then
-                    EID:removeIgnoredEntity(5,10,902)
-                else
-                    EID:addIgnoredEntity(5,10,902)
-                end
-			end,
-			Info = "Show or hide toggle for Immortal heart's EID.",
-		})
-    end
 	
 end
