@@ -11,7 +11,7 @@ function ComplianceImmortal.AddImmortalHearts(player, amount)
 	local data = mod:GetData(player)
 	if amount % 2 == 0 then -- only even immortal heart amounts
 		if ComplianceImmortal.GetImmortalHearts(player) % 2 ~= 0 then
-			amount = amount - 1 -- if you have a half immortal heart, a new full immortal heart always only heals it instead of adding another heart
+			amount = amount - 1 -- if you already have a half immortal heart, a new full immortal heart always only heals it instead of adding another heart
 		end
 	end
 	
@@ -344,11 +344,7 @@ mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.HeartHandling)
 
 function mod:ImmortalHeal()
 	for i = 0, game:GetNumPlayers() - 1 do
-		local player = Isaac.GetPlayer(i)
-		local data = mod:GetData(player)
-		if ComplianceImmortal.GetImmortalHearts(player) > 0 and ComplianceImmortal.GetImmortalHearts(player) % 2 ~= 0 then
-			ComplianceImmortal.HealImmortalHeart(player)
-		end
+		ComplianceImmortal.HealImmortalHeart(Isaac.GetPlayer(i))
 	end
 	for _, entity in pairs(Isaac.FindByType(3, 206)) do
 		local wispdata = entity:GetData()
