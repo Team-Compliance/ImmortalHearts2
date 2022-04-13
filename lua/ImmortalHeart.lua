@@ -28,6 +28,19 @@ function ComplianceImmortal.GetImmortalHearts(player)
 	return data.ComplianceImmortalHeart
 end
 
+function ComplianceImmortal.HealImmortalHeart(player) -- returns true if successful
+	local data = mod:GetData(player)
+	if ComplianceImmortal.GetImmortalHearts(player) > 0 and ComplianceImmortal.GetImmortalHearts(player) % 2 ~= 0 then
+		ImmortalEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, 903, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect()
+		ImmortalEffect:GetSprite().Offset = Vector(0, -22)
+		SFXManager():Play(immortalSfx,1,0)
+		data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + 1
+		player:AddBlackHearts(1)
+		return true
+	end
+	return false
+end
+
 ---
 
 function mod:initData(player)
@@ -316,6 +329,18 @@ function mod:HeartHandling(player)
 				player:AddSoulHearts(-1)
 			end
 		end
+		
+		-- code below makes sure there are no discrepencies in soul hearts and immortal heart count (for half soul heart shenanigans)
+		if player:GetSoulHearts() % 2 == 0 then
+			if ComplianceImmortal.GetImmortalHearts(player) % 2 ~= 0 then
+				data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + 1
+			end
+		end
+		if player:GetSoulHearts() % 2 ~= 0 then
+			if ComplianceImmortal.GetImmortalHearts(player) % 2 == 0 then
+				player:AddSoulHearts(1)
+			end
+		end
 	end
 end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.HeartHandling)
@@ -324,12 +349,8 @@ function mod:ImmortalHeal()
 	for i = 0, game:GetNumPlayers() - 1 do
 		local player = Isaac.GetPlayer(i)
 		local data = mod:GetData(player)
-		if not (data.ComplianceImmortalHeart % 2 == 0) then
-			ImmortalEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, 903, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect()
-			ImmortalEffect:GetSprite().Offset = Vector(0, -22)
-			SFXManager():Play(immortalSfx,1,0)
-			data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + 1
-			player:AddSoulHearts(1)
+		if ComplianceImmortal.GetImmortalHearts(player) > 0 and ComplianceImmortal.GetImmortalHearts(player) % 2 ~= 0 then
+			ComplianceImmortal.HealImmortalHeart(player)
 		end
 	end
 	for _, entity in pairs(Isaac.FindByType(3, 206)) do
