@@ -282,8 +282,9 @@ function mod:ActOfImmortal(player)
 	if not player:HasCollectible(CollectibleType.COLLECTIBLE_ACT_OF_CONTRITION) then return end
 	if mod.optionContrition ~= 1 then return end
 	local data = mod:GetData(player)
-	if not data.lastEternalHearts then
+	if not data.lastEternalHearts or not data.lastMaxHearts then
 		data.lastEternalHearts = 0
+		data.lastMaxHearts = 0
 	end
 	if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B then
 		player = player:GetMainTwin()
@@ -294,11 +295,16 @@ function mod:ActOfImmortal(player)
 	
 	if player:GetCollectibleNum(CollectibleType.COLLECTIBLE_ACT_OF_CONTRITION) == data.ContritionCount then
 		data.lastEternalHearts = player:GetEternalHearts()
+		data.lastMaxHearts = player:GetMaxHearts()
 	end
 	data.ContritionCount = player:GetCollectibleNum(CollectibleType.COLLECTIBLE_ACT_OF_CONTRITION)
 	
-	if player:GetEternalHearts() ~= data.lastEternalHearts then
+	if player:GetEternalHearts() > data.lastEternalHearts then
 		player:AddEternalHearts(-1)
+		
+		ComplianceImmortal.AddImmortalHearts(player, 2)
+	elseif player:GetMaxHearts() > data.lastMaxHearts then
+		player:AddMaxHearts(-2) -- still plays the eternal heart animation but its the best we can do right now
 		
 		ComplianceImmortal.AddImmortalHearts(player, 2)
 	end
@@ -355,7 +361,7 @@ function mod:ImmortalHeal()
 end
 mod:AddCallback(ModCallbacks.MC_PRE_SPAWN_CLEAN_AWARD, mod.ImmortalHeal)
 
-function mod:preEntitySpawn(entityType, variant, subType, position, velocity, spawner, seed)
+function mod:PreEternalSpawn(entityType, variant, subType, position, velocity, spawner, seed)
 	local rng = RNG()
 	if entityType == EntityType.ENTITY_PICKUP then
 		if variant == PickupVariant.PICKUP_HEART then
@@ -368,7 +374,7 @@ function mod:preEntitySpawn(entityType, variant, subType, position, velocity, sp
 		end
 	end
 end
-mod:AddCallback(ModCallbacks.MC_PRE_ENTITY_SPAWN, mod.preEntitySpawn)
+mod:AddCallback(ModCallbacks.MC_PRE_ENTITY_SPAWN, mod.PreEternalSpawn)
 
 function mod:DefaultWispInit(wisp)
 	local player = wisp.Player
