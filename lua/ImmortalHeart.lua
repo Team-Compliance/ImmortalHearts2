@@ -9,9 +9,9 @@ local screenHelper = require("lua.screenhelper")
 
 function ComplianceImmortal.AddImmortalHearts(player, amount)
 	local data = mod:GetData(player)
-	if amount % 2 == 0 then -- only even immortal heart amounts
-		if ComplianceImmortal.GetImmortalHearts(player) % 2 ~= 0 then
-			amount = amount - 1 -- if you already have a half immortal heart, a new full immortal heart always only heals it instead of adding another heart
+	if amount % 2 == 0 then
+		if player:GetSoulHearts() % 2 ~= 0 then
+			amount = amount - 1 -- if you already have a half heart, a new full immortal heart always replaces it instead of adding another heart
 		end
 	end
 	
