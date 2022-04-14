@@ -9,6 +9,7 @@ local screenHelper = require("lua.screenhelper")
 
 function ComplianceImmortal.AddImmortalHearts(player, amount)
 	local data = mod:GetData(player)
+	player = player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN and player:GetSubPlayer() or player
 	if amount % 2 == 0 then
 		if player:GetSoulHearts() % 2 ~= 0 then
 			amount = amount - 1 -- if you already have a half heart, a new full immortal heart always replaces it instead of adding another heart
@@ -72,7 +73,7 @@ function mod:ImmortalHeartUpdate(entity, collider)
 			player = player:GetMainTwin()
 		end
 		local data = mod:GetData(player)
-		local player = player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN and player:GetSubPlayer() or player
+		--local player = player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN and player:GetSubPlayer() or player
 		if data.ComplianceImmortalHeart < (player:GetHeartLimit() - player:GetEffectiveMaxHearts()) then
 			if entity.SubType == HeartSubType.HEART_IMMORTAL then
 				if player:GetPlayerType() ~= PlayerType.PLAYER_THELOST and player:GetPlayerType() ~= PlayerType.PLAYER_THELOST_B then
