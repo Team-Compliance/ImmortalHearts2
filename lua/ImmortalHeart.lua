@@ -7,9 +7,8 @@ local screenHelper = require("lua.screenhelper")
 
 -- API functions --
 
-function ComplianceImmortal.AddImmortalHearts(player, amount)
-	local data = mod:GetData(player)
-	player = player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN and player:GetSubPlayer() or player
+function ComplianceImmortal.AddImmortalHearts(player, amount, data)
+	data = data and data or mod:GetData(player)
 	if amount % 2 == 0 then
 		if player:GetSoulHearts() % 2 ~= 0 then
 			amount = amount - 1 -- if you already have a half heart, a new full immortal heart always replaces it instead of adding another heart
@@ -26,8 +25,8 @@ function ComplianceImmortal.AddImmortalHearts(player, amount)
 	end
 end
 
-function ComplianceImmortal.GetImmortalHearts(player)
-	local data = mod:GetData(player)
+function ComplianceImmortal.GetImmortalHearts(player,data)
+	data = data and data or mod:GetData(player)
 	return data.ComplianceImmortalHeart
 end
 
@@ -37,7 +36,7 @@ function ComplianceImmortal.HealImmortalHeart(player) -- returns true if success
 		ImmortalEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, 903, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect()
 		ImmortalEffect:GetSprite().Offset = Vector(0, -22)
 		SFXManager():Play(immortalSfx,1,0)
-		ComplianceImmortal.AddImmortalHearts(player, 1)
+		ComplianceImmortal.AddImmortalHearts(player, 1, data)
 		return true
 	end
 	return false
@@ -73,11 +72,11 @@ function mod:ImmortalHeartUpdate(entity, collider)
 			player = player:GetMainTwin()
 		end
 		local data = mod:GetData(player)
-		--local player = player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN and player:GetSubPlayer() or player
+		local player = player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN and player:GetSubPlayer() or player
 		if data.ComplianceImmortalHeart < (player:GetHeartLimit() - player:GetEffectiveMaxHearts()) then
 			if entity.SubType == HeartSubType.HEART_IMMORTAL then
 				if player:GetPlayerType() ~= PlayerType.PLAYER_THELOST and player:GetPlayerType() ~= PlayerType.PLAYER_THELOST_B then
-					ComplianceImmortal.AddImmortalHearts(player, 2)
+					ComplianceImmortal.AddImmortalHearts(player, 2, data)
 				end
 				
 				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
@@ -336,12 +335,13 @@ function mod:HeartHandling(player)
 		end
 		
 		if player:GetSoulHearts() % 2 == 0 then
-			if ComplianceImmortal.GetImmortalHearts(player) % 2 ~= 0 then
+			if ComplianceImmortal.GetImmortalHearts(player,data) % 2 ~= 0 then
 				data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + 1
 			end
 		end
 		if player:GetSoulHearts() % 2 ~= 0 then
-			if ComplianceImmortal.GetImmortalHearts(player) % 2 == 0 then
+			if ComplianceImmortal.GetImmortalHearts(player,data) % 2 == 0 then
+				print(player:GetSoulHearts())
 				player:AddSoulHearts(1)
 			end
 		end
