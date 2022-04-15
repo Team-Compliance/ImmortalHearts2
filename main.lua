@@ -76,9 +76,9 @@ function mod:OnLoad(isLoading)
 		
 		if EID then
 			if mod.optionContrition == 1 then -- Has to be here because of save data
-				EID:addCollectible(601, "↑ {{Tears}} +0.7 Tears up#{{ImmortalHeart}} +1 Immortal Heart#{{AngelDevilChance}} Allows both Devil and Angel deals to be taken#Taking Red Heart damage doesn't reduce Devil/Angel Room chance as much", "Act of contrition", "en_us")
-				EID:addCollectible(601, "↑ {{Tears}} Lágrimas +0.7#{{ImmortalHeart}} +1 corazón inmortal#{{AngelDevilChance}} Permite que aparezcan salas del ángel aunque hayas hecho pactos con el diablo antes", "Acto de Contrición", "spa")
-				EID:addCollectible(601, "↑ {{Tears}} +0.7 к скорострельности#{{ImmortalHeart}} +1 бессмертное сердце#{{AngelDevilChance}} Позволяет Ангельским комнатам появляться даже в том случае, если ранее была заключена сделка с Дьяволом#Получение урона красными сердцами не так сильно снижает шанс сделки","Покаяние","ru")
+				EID:addCollectible(601, "↑ {{Tears}} +0.7 Tears up#{{ImmortalHeart}} +1 Immortal Heart#{{AngelChance}} Allows Angel Rooms to spawn even if you've taken a Devil deal#Taking Red Heart damage doesn't reduce Devil/Angel Room chance as much", "Act of Contrition", "en_us")
+				EID:addCollectible(601, "↑ {{Tears}} Lágrimas +0.7#{{ImmortalHeart}} +1 corazón inmortal#{{AngelChance}} Permite que aparezcan salas del ángel aunque hayas hecho pactos con el diablo antes", "Acto de contrición", "spa")
+				EID:addCollectible(601, "↑ {{Tears}} +0.7 к скорострельности#{{ImmortalHeart}} +1 бессмертное сердце#{{AngelChance}} Позволяет Ангельским комнатам появляться даже в том случае, если ранее была заключена сделка с Дьяволом#Получение урона красными сердцами не так сильно снижает шанс сделки", "Покаяние", "ru")
 			end
 		end
 	end
