@@ -79,6 +79,7 @@ function mod:ImmortalHeartUpdate(entity, collider)
 					ComplianceImmortal.AddImmortalHearts(player, 2, data)
 				end
 				
+				entity.Velocity = Vector.Zero
 				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
 				entity:GetSprite():Play("Collect", true)
 				entity:Die()
