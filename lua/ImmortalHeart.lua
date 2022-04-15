@@ -7,7 +7,7 @@ local screenHelper = require("lua.screenhelper")
 
 -- API functions --
 
-function ComplianceImmortal.AddImmortalHearts(player, amount, data)
+function ComplianceImmortal.AddImmortalHearts(player, amount, data) -- data is optional
 	data = data and data or mod:GetData(player)
 	if amount % 2 == 0 then
 		if player:GetSoulHearts() % 2 ~= 0 then
@@ -36,7 +36,7 @@ function ComplianceImmortal.HealImmortalHeart(player) -- returns true if success
 		ImmortalEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, 903, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect()
 		ImmortalEffect:GetSprite().Offset = Vector(0, -22)
 		SFXManager():Play(immortalSfx,1,0)
-		ComplianceImmortal.AddImmortalHearts(player, 1, data)
+		ComplianceImmortal.AddImmortalHearts(player, 1)
 		return true
 	end
 	return false
@@ -65,7 +65,7 @@ local function CanOnlyHaveSoulHearts(player)
 	return false
 end
 
-function mod:ImmortalHeartUpdate(entity, collider)
+function mod:ImmortalHeartCollision(entity, collider)
 	if collider.Type == EntityType.ENTITY_PLAYER then
 		local player = collider:ToPlayer()
 		if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B then
@@ -89,7 +89,7 @@ function mod:ImmortalHeartUpdate(entity, collider)
 		end
 	end
 end
-mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, mod.ImmortalHeartUpdate, PickupVariant.PICKUP_HEART)
+mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, mod.ImmortalHeartCollision, PickupVariant.PICKUP_HEART)
 
 function mod:shouldDeHook()
 	local reqs = {
