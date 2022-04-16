@@ -1,4 +1,4 @@
-<?xml version="2.2" encoding="UTF-8"?>
+<?xml version="2.3" encoding="UTF-8"?>
 <metadata>
     <name>Immortal Hearts</name>
     <directory>compliance immortal heart</directory>
@@ -72,7 +72,7 @@
 [img]https://i.imgur.com/jBFg02x.png[/img] [url=https://twitter.com/ComplianceMods]TBOI: Compliance Twitter[/url] [img]https://i.imgur.com/jBFg02x.png[/img]
 
 [img]https://i.imgur.com/MTKQKCX.png[/img]</description>
-    <version>2.2</version>
+    <version>2.3</version>
     <visibility>Public</visibility>
     <tag id="Lua"/>
     <tag id="Pickups"/>
