@@ -300,6 +300,7 @@ function mod:ActOfImmortal(player)
 	end
 	data.ContritionCount = player:GetCollectibleNum(CollectibleType.COLLECTIBLE_ACT_OF_CONTRITION)
 	
+	if player:GetPlayerType() == PlayerType.PLAYER_KEEPER or player:GetPlayerType() == PlayerType.PLAYER_KEEPER_B then return end
 	if player:GetEternalHearts() > data.lastEternalHearts then
 		player:AddEternalHearts(-1)
 		
