@@ -50,7 +50,7 @@ end
 mod:AddCallback(ModCallbacks.MC_FAMILIAR_UPDATE, mod.StaticHP, 238)
 
 function mod:UseSumptorium(boi, rng, player, slot, data)
-	local data = mod:GetData(player)
+	local index = mod:GetEntityIndex(player)
 	if player:GetPlayerType() == PlayerType.PLAYER_EVE_B then
 		local amount = 0
 		for _, entity in pairs(Isaac.FindByType(3, 238, 20)) do
@@ -59,20 +59,20 @@ function mod:UseSumptorium(boi, rng, player, slot, data)
 		end
 		if amount > 0 then
 			player:AddSoulHearts(amount)
-			data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + amount
+			mod.DataTable[index].ComplianceImmortalHeart = mod.DataTable[index].ComplianceImmortalHeart + amount
 		end
 	end
 end
 mod:AddCallback(ModCallbacks.MC_USE_ITEM, mod.UseSumptorium, CollectibleType.COLLECTIBLE_SUMPTORIUM)
 
 function mod:UseSumptoriumNoTEve(boi, rng, player, useFlags, slot, data)
-	local data = mod:GetData(player)
-	if data.ComplianceImmortalHeart > 0 and player:GetHearts() == 0 and player:GetPlayerType() ~= PlayerType.PLAYER_EVE_B then
-		if data.ComplianceImmortalHeart % 2 ~= 0 then
+	local index = mod:GetEntityIndex(player)
+	if mod.DataTable[index].ComplianceImmortalHeart > 0 and player:GetHearts() == 0 and player:GetPlayerType() ~= PlayerType.PLAYER_EVE_B then
+		if mod.DataTable[index].ComplianceImmortalHeart % 2 ~= 0 then
 			SFXManager():Play(Isaac.GetSoundIdByName("ImmortalHeartBreak"),1,0)
 			local shatterSPR = Isaac.Spawn(EntityType.ENTITY_EFFECT, 904, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect():GetSprite()
 			shatterSPR.PlaybackSpeed = 2
-			local NumSoulHearts = player:GetSoulHearts() - (1 - player:GetSoulHearts() % 2) - data.ComplianceImmortalHeart - 1
+			local NumSoulHearts = player:GetSoulHearts() - (1 - player:GetSoulHearts() % 2) - mod.DataTable[index].ComplianceImmortalHeart - 1
 			player:RemoveBlackHeart(NumSoulHearts)
 		else
 			SFXManager():Play(SoundEffect.SOUND_MEAT_JUMPS,1,0)
@@ -97,7 +97,7 @@ function mod:UseSumptoriumNoTEve(boi, rng, player, useFlags, slot, data)
 			ImmortalEffect:GetSprite().Offset = Vector(0, -10)
 		end
 		player:AddSoulHearts(-1)
-		data.ComplianceImmortalHeart = data.ComplianceImmortalHeart - 1
+		mod.DataTable[index].ComplianceImmortalHeart = mod.DataTable[index].ComplianceImmortalHeart - 1
 		player:AnimateCollectible(CollectibleType.COLLECTIBLE_SUMPTORIUM, "UseItem")
 		return true
 	end
@@ -110,13 +110,13 @@ mod:AddCallback(ModCallbacks.MC_PRE_USE_ITEM, mod.UseSumptoriumNoTEve, Collectib
 --t eve's ability
 function mod:TEveSpawn(baby)
 	local player = baby.Player
-	local data = mod:GetData(player)
-	if (player:GetPlayerType() == PlayerType.PLAYER_EVE_B) and (data.ComplianceImmortalHeart > 0) and (baby.SubType == 1) then
-		if data.ComplianceImmortalHeart % 2 ~= 0 then
+	local index = mod:GetEntityIndex(player)
+	if (player:GetPlayerType() == PlayerType.PLAYER_EVE_B) and (mod.DataTable[index].ComplianceImmortalHeart > 0) and (baby.SubType == 1) then
+		if mod.DataTable[index].ComplianceImmortalHeart % 2 ~= 0 then
 			SFXManager():Play(Isaac.GetSoundIdByName("ImmortalHeartBreak"),1,0)
 			local shatterSPR = Isaac.Spawn(EntityType.ENTITY_EFFECT, 904, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect():GetSprite()
 			shatterSPR.PlaybackSpeed = 2
-			local NumSoulHearts = player:GetSoulHearts() - (1 - player:GetSoulHearts() % 2) - data.ComplianceImmortalHeart - 1
+			local NumSoulHearts = player:GetSoulHearts() - (1 - player:GetSoulHearts() % 2) - mod.DataTable[index].ComplianceImmortalHeart - 1
 			player:RemoveBlackHeart(NumSoulHearts)
 		end
 		local clot
@@ -138,7 +138,7 @@ function mod:TEveSpawn(baby)
 			local ImmortalEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, 903, 0, clot.Position + Vector(0, 1), Vector.Zero, nil):ToEffect()
 			ImmortalEffect:GetSprite().Offset = Vector(0, -10)
 		end
-		data.ComplianceImmortalHeart = data.ComplianceImmortalHeart - 1
+		mod.DataTable[index].ComplianceImmortalHeart = mod.DataTable[index].ComplianceImmortalHeart - 1
 		baby:Remove()
 	end
 end

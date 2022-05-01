@@ -8,7 +8,7 @@ local screenHelper = require("lua.screenhelper")
 -- API functions --
 
 function ComplianceImmortal.AddImmortalHearts(player, amount, data) -- data is optional
-	data = data and data or mod:GetData(player)
+	local index = mod:GetEntityIndex(player)
 	if amount % 2 == 0 then
 		if player:GetSoulHearts() % 2 ~= 0 then
 			amount = amount - 1 -- if you already have a half heart, a new full immortal heart always replaces it instead of adding another heart
@@ -19,41 +19,26 @@ function ComplianceImmortal.AddImmortalHearts(player, amount, data) -- data is o
 		player:AddBlackHearts(amount)
 	end
 	if player:GetPlayerType() == PlayerType.PLAYER_BETHANY then
-		data.ImmortalCharge = data.ImmortalCharge + math.ceil(amount/2)
+		mod.DataTable[index].ImmortalCharge = mod.DataTable[index].ImmortalCharge + math.ceil(amount/2)
 	else
-		data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + amount
+		mod.DataTable[index].ComplianceImmortalHeart = mod.DataTable[index].ComplianceImmortalHeart + amount
 	end
 end
 
-function ComplianceImmortal.GetImmortalHearts(player,data)
-	data = data and data or mod:GetData(player)
-	return data.ComplianceImmortalHeart
+function ComplianceImmortal.GetImmortalHearts(player)
+	return mod.DataTable[mod:GetEntityIndex(player)].ComplianceImmortalHeart
 end
 
 function ComplianceImmortal.HealImmortalHeart(player) -- returns true if successful
-	local data = mod:GetData(player)
 	if ComplianceImmortal.GetImmortalHearts(player) > 0 and ComplianceImmortal.GetImmortalHearts(player) % 2 ~= 0 then
 		ImmortalEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, 903, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect()
 		ImmortalEffect:GetSprite().Offset = Vector(0, -22)
 		SFXManager():Play(immortalSfx,1,0)
-		ComplianceImmortal.AddImmortalHearts(player, 1, data)
+		ComplianceImmortal.AddImmortalHearts(player, 1)
 		return true
 	end
 	return false
 end
-
----
-
-function mod:initData(player)
-	local data = mod:GetData(player)
-	if data.ComplianceImmortalHeart == nil then
-		data.ComplianceImmortalHeart = 0
-	end
-    if player:GetPlayerType() == PlayerType.PLAYER_BETHANY then
-    	data.ImmortalCharge = 0
-	end
-end
-mod:AddCallback(ModCallbacks.MC_POST_PLAYER_INIT, mod.initData)
 
 local function CanOnlyHaveSoulHearts(player)
 	if player:GetPlayerType() == PlayerType.PLAYER_BLUEBABY
@@ -71,14 +56,13 @@ function mod:ImmortalHeartCollision(entity, collider)
 		if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B then
 			player = player:GetMainTwin()
 		end
-		local data = mod:GetData(player)
-		local player = player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN and player:GetSubPlayer() or player
+		local data = mod.DataTable[mod:GetEntityIndex(player)]
+		
 		if data.ComplianceImmortalHeart < (player:GetHeartLimit() - player:GetEffectiveMaxHearts()) then
 			if entity.SubType == HeartSubType.HEART_IMMORTAL then
 				if player:GetPlayerType() ~= PlayerType.PLAYER_THELOST and player:GetPlayerType() ~= PlayerType.PLAYER_THELOST_B then
-					ComplianceImmortal.AddImmortalHearts(player, 2, data)
+					ComplianceImmortal.AddImmortalHearts(player, 2)
 				end
-				
 				entity.Velocity = Vector.Zero
 				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
 				entity:GetSprite():Play("Collect", true)
@@ -101,11 +85,11 @@ function mod:shouldDeHook()
 end
 
 local function renderingHearts(player,playeroffset)
-	local data = mod:GetData(player)
+	local index = mod:GetEntityIndex(player)
 	local pType = player:GetPlayerType()
 	local isForgotten = pType == PlayerType.PLAYER_THEFORGOTTEN and 1 or 0
 	local transperancy = 1
-	local isTotalEven = data.ComplianceImmortalHeart % 2 == 0
+	local isTotalEven = mod.DataTable[index].ComplianceImmortalHeart % 2 == 0
 	local level = game:GetLevel()
 	if pType == PlayerType.PLAYER_JACOB2_B or player:GetEffects():HasNullEffect(NullItemID.ID_LOST_CURSE) or isForgotten == 1 then
 		transperancy = 0.3
@@ -113,7 +97,7 @@ local function renderingHearts(player,playeroffset)
 	if isForgotten == 1 then
 		player = player:GetSubPlayer()
 	end
-	local heartIndex = math.ceil(data.ComplianceImmortalHeart/2) - 1
+	local heartIndex = math.ceil(mod.DataTable[index].ComplianceImmortalHeart/2) - 1
 	local goldHearts = player:GetGoldenHearts()
 	local getMaxHearts = player:GetEffectiveMaxHearts() + (player:GetSoulHearts() + player:GetSoulHearts() % 2)
 	local eternalHeart = player:GetEternalHearts()
@@ -206,24 +190,25 @@ function mod:onRender(shadername)
 	local isJacobFirst = false
 	for i = 0, game:GetNumPlayers() - 1 do
 		local player = Isaac.GetPlayer(i)
-		local data = mod:GetData(player)
+		local index = mod:GetEntityIndex(player)
 		if i == 0 and player:GetPlayerType() == PlayerType.PLAYER_JACOB then
 			isJacobFirst = true
 		end
+		
 		if (player:GetPlayerType() == PlayerType.PLAYER_LAZARUS_B or player:GetPlayerType() == PlayerType.PLAYER_LAZARUS2_B) then
 			if player:GetOtherTwin() then
-				if data.i and data.i == i then
-					data.i = nil
+				if mod.DataTable[index].i and mod.DataTable[index].i == i then
+					mod.DataTable[index].i = nil
 				end
-				if not data.i then
-					local otherTData = mod:GetData(player:GetOtherTwin())
-					otherTData.i = i
+				if not mod.DataTable[index].i then
+					local otherIndex = mod:GetEntityIndex(player:GetOtherTwin())
+					mod.DataTable[otherIndex].i = i
 				end
-			elseif data.i then
-				data.i = nil
+			elseif mod.DataTable[index].i then
+				mod.DataTable[index].i = nil
 			end
 		end
-		if player:GetPlayerType() ~= PlayerType.PLAYER_THESOUL_B and not player.Parent and not data.i then
+		if player:GetPlayerType() ~= PlayerType.PLAYER_THESOUL_B and not player.Parent and not mod.DataTable[index].i then
 			if player:GetPlayerType() == PlayerType.PLAYER_ESAU and isJacobFirst then
 				renderingHearts(player,5)	
 			elseif player:GetPlayerType() ~= PlayerType.PLAYER_ESAU then
@@ -237,14 +222,15 @@ mod:AddCallback(ModCallbacks.MC_GET_SHADER_PARAMS, mod.onRender)
 
 function mod:ImmortalBlock(entity, damage, flag, source, cooldown)
 	local player = entity:ToPlayer()
-	local data = mod:GetData(player)
+	if player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN then return nil end
+	local index = mod:GetEntityIndex(player)
 	player = player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN_B and player:GetOtherTwin() or player
-	if data.ComplianceImmortalHeart > 0 and damage > 0 then
-		if not data.ImmortalTakeDmg and source.Type ~= EntityType.ENTITY_DARK_ESAU then
+	if mod.DataTable[index].ComplianceImmortalHeart > 0 and damage > 0 then
+		if not mod.DataTable[index].ImmortalTakeDmg and source.Type ~= EntityType.ENTITY_DARK_ESAU then
 			if flag & DamageFlag.DAMAGE_FAKE == 0 then
 				if not ((flag & DamageFlag.DAMAGE_RED_HEARTS == DamageFlag.DAMAGE_RED_HEARTS or player:HasTrinket(TrinketType.TRINKET_CROW_HEART)) and player:GetHearts() > 0) then
-					local isLastImmortalEternal = data.ComplianceImmortalHeart == 1 and player:GetSoulHearts() == 1 and player:GetEffectiveMaxHearts() == 0 and player:GetEternalHearts() > 0
-					if (data.ComplianceImmortalHeart % 2 ~= 0) and not isLastImmortalEternal then
+					local isLastImmortalEternal = mod.DataTable[index].ComplianceImmortalHeart == 1 and player:GetSoulHearts() == 1 and player:GetEffectiveMaxHearts() == 0 and player:GetEternalHearts() > 0
+					if (mod.DataTable[index].ComplianceImmortalHeart % 2 ~= 0) and not isLastImmortalEternal then
 						sfx:Play(immortalBreakSfx,1,0)
 						local shatterSPR = Isaac.Spawn(EntityType.ENTITY_EFFECT, 904, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect():GetSprite()
 						shatterSPR.PlaybackSpeed = 2
@@ -253,11 +239,11 @@ function mod:ImmortalBlock(entity, damage, flag, source, cooldown)
 					end
 					--Checking for Half Immortal and Eternal heart
 					if not isLastImmortalEternal  then
-						data.ComplianceImmortalHeart = data.ComplianceImmortalHeart - 1
+						mod.DataTable[index].ComplianceImmortalHeart = mod.DataTable[index].ComplianceImmortalHeart - 1
 					end
-					data.ImmortalTakeDmg = true
+					mod.DataTable[index].ImmortalTakeDmg = true
 					player:TakeDamage(1,flag | DamageFlag.DAMAGE_NO_MODIFIERS,source,cooldown)
-					if data.ComplianceImmortalHeart > 0 then
+					if mod.DataTable[index].ComplianceImmortalHeart > 0 then
 						local cd = isLastImmortalEternal and cooldown or 20
 						player:ResetDamageCooldown()
 						player:SetMinDamageCooldown(cd)
@@ -271,10 +257,10 @@ function mod:ImmortalBlock(entity, damage, flag, source, cooldown)
 				end
 			end
 		else
-			data.ImmortalTakeDmg = nil
+			mod.DataTable[index].ImmortalTakeDmg = nil
 		end
 	else
-		data.ImmortalTakeDmg = nil
+		mod.DataTable[index].ImmortalTakeDmg = nil
 	end
 end
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, mod.ImmortalBlock, EntityType.ENTITY_PLAYER)
@@ -282,10 +268,10 @@ mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, mod.ImmortalBlock, EntityType.E
 function mod:ActOfImmortal(player)
 	if not player:HasCollectible(CollectibleType.COLLECTIBLE_ACT_OF_CONTRITION) then return end
 	if mod.optionContrition ~= 1 then return end
-	local data = mod:GetData(player)
-	if not data.lastEternalHearts or not data.lastMaxHearts then
-		data.lastEternalHearts = 0
-		data.lastMaxHearts = 0
+	local index = mod:GetEntityIndex(player)
+	if not mod.DataTable[index].lastEternalHearts or not mod.DataTable[index].lastMaxHearts then
+		mod.DataTable[index].lastEternalHearts = 0
+		mod.DataTable[index].lastMaxHearts = 0
 	end
 	if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B then
 		player = player:GetMainTwin()
@@ -294,18 +280,18 @@ function mod:ActOfImmortal(player)
 		player = player:GetSubPlayer()
 	end
 	
-	if player:GetCollectibleNum(CollectibleType.COLLECTIBLE_ACT_OF_CONTRITION) == data.ContritionCount then
-		data.lastEternalHearts = player:GetEternalHearts()
-		data.lastMaxHearts = player:GetMaxHearts()
+	if player:GetCollectibleNum(CollectibleType.COLLECTIBLE_ACT_OF_CONTRITION) == mod.DataTable[index].ContritionCount then
+		mod.DataTable[index].lastEternalHearts = player:GetEternalHearts()
+		mod.DataTable[index].lastMaxHearts = player:GetMaxHearts()
 	end
-	data.ContritionCount = player:GetCollectibleNum(CollectibleType.COLLECTIBLE_ACT_OF_CONTRITION)
+	mod.DataTable[index].ContritionCount = player:GetCollectibleNum(CollectibleType.COLLECTIBLE_ACT_OF_CONTRITION)
 	
 	if player:GetPlayerType() == PlayerType.PLAYER_KEEPER or player:GetPlayerType() == PlayerType.PLAYER_KEEPER_B then return end
-	if player:GetEternalHearts() > data.lastEternalHearts then
+	if player:GetEternalHearts() > mod.DataTable[index].lastEternalHearts then
 		player:AddEternalHearts(-1)
 		
 		ComplianceImmortal.AddImmortalHearts(player, 2)
-	elseif player:GetMaxHearts() > data.lastMaxHearts then
+	elseif player:GetMaxHearts() > mod.DataTable[index].lastMaxHearts then
 		player:AddMaxHearts(-2) -- still plays the eternal heart animation but its the best we can do right now
 		
 		ComplianceImmortal.AddImmortalHearts(player, 2)
@@ -314,13 +300,13 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.ActOfImmortal)
 
 function mod:HeartHandling(player)
-	local data = mod:GetData(player)
 	if player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN then
 		player = player:GetSubPlayer()
 	end
-	if data.ComplianceImmortalHeart > 0 then
-		data.ComplianceImmortalHeart = data.ComplianceImmortalHeart > player:GetSoulHearts() and player:GetSoulHearts() or data.ComplianceImmortalHeart
-		local heartIndex = math.ceil(data.ComplianceImmortalHeart/2) - 1
+	local index = mod:GetEntityIndex(player)
+	if mod.DataTable[index].ComplianceImmortalHeart > 0 then
+		mod.DataTable[index].ComplianceImmortalHeart = mod.DataTable[index].ComplianceImmortalHeart > player:GetSoulHearts() and player:GetSoulHearts() or mod.DataTable[index].ComplianceImmortalHeart
+		local heartIndex = math.ceil(mod.DataTable[index].ComplianceImmortalHeart/2) - 1
 		for i=0, heartIndex do
 			local ExtraHearts = math.ceil(player:GetSoulHearts() / 2) + player:GetBoneHearts() - i
 			local imHeartLastIndex = player:GetSoulHearts() - (1 - player:GetSoulHearts() % 2) - i * 2
@@ -328,21 +314,22 @@ function mod:HeartHandling(player)
 				for j = imHeartLastIndex, imHeartLastIndex - (heartIndex + 1) * 2, -2 do
 					player:RemoveBlackHeart(j)
 				end
-				player:AddSoulHearts(-data.ComplianceImmortalHeart)
-				player:AddBlackHearts(data.ComplianceImmortalHeart)
+				player:AddSoulHearts(-mod.DataTable[index].ComplianceImmortalHeart)
+				player:AddBlackHearts(mod.DataTable[index].ComplianceImmortalHeart)
 			end
-			if player:GetEffectiveMaxHearts() + player:GetSoulHearts() == player:GetHeartLimit() and data.ComplianceImmortalHeart == 1 then
+			if player:GetEffectiveMaxHearts() + player:GetSoulHearts() == player:GetHeartLimit() and mod.DataTable[index].ComplianceImmortalHeart == 1 then
 				player:AddSoulHearts(-1)
 			end
 		end
 		
 		if player:GetSoulHearts() % 2 == 0 then
-			if ComplianceImmortal.GetImmortalHearts(player,data) % 2 ~= 0 then
-				data.ComplianceImmortalHeart = data.ComplianceImmortalHeart + 1
+			if ComplianceImmortal.GetImmortalHearts(player) % 2 ~= 0 then
+				mod.DataTable[index].ComplianceImmortalHeart = mod.DataTable[index].ComplianceImmortalHeart + 1
 			end
 		end
 		if player:GetSoulHearts() % 2 ~= 0 then
-			if ComplianceImmortal.GetImmortalHearts(player,data) % 2 == 0 then
+			if ComplianceImmortal.GetImmortalHearts(player) % 2 == 0 then
+				print(player:GetPlayerType())
 				player:AddSoulHearts(1)
 			end
 		end
@@ -355,8 +342,8 @@ function mod:ImmortalHeal()
 		ComplianceImmortal.HealImmortalHeart(Isaac.GetPlayer(i))
 	end
 	for _, entity in pairs(Isaac.FindByType(3, 206)) do
-		local wispdata = entity:GetData()
-		if wispdata.IsImmortal == 1 and entity.HitPoints < entity.MaxHitPoints + 3 then
+		local index = mod:GetEntityIndex(entity)
+		if mod.DataTable[index].IsImmortal == 1 and entity.HitPoints < entity.MaxHitPoints + 3 then
 			entity.HitPoints = entity.HitPoints + 1
 		end
 	end
@@ -380,17 +367,32 @@ mod:AddCallback(ModCallbacks.MC_PRE_ENTITY_SPAWN, mod.PreEternalSpawn)
 
 function mod:DefaultWispInit(wisp)
 	local player = wisp.Player
-	local data = mod:GetData(player)
-	local wispdata = wisp:GetData()
-	if data.ImmortalCharge > 0 then
-	wisp:SetColor(Color(232, 240, 255, 0.02, 0, 0, 0), -1, 1, false, false)
-		data.ImmortalCharge = data.ImmortalCharge - 1
-		wispdata.IsImmortal = 1
+	local index = mod:GetEntityIndex(player)
+	local wispIndex = mod:GetEntityIndex(wisp)
+	if mod.DataTable[index].ImmortalCharge > 0 then
+		wisp:SetColor(Color(232, 240, 255, 0.02, 0, 0, 0), -1, 1, false, false)
+		mod.DataTable[index].ImmortalCharge = mod.DataTable[index].ImmortalCharge - 1
+		mod.DataTable[wispIndex].IsImmortal = 1
 	else
-		wispdata.IsImmortal = 0
+		mod.DataTable[wispIndex].IsImmortal = 0
 	end
 end
 mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, mod.DefaultWispInit, FamiliarVariant.WISP)
+
+function mod:ImmortalWispUpdate(wisp)
+	local wispIndex = mod:GetEntityIndex(wisp)
+	local wispData = mod:GetData(wisp)
+	if not wispData.IsImmortal then
+		wispData.IsImmortal = 0
+	end
+	if mod.DataTable[wispIndex].IsImmortal and wispData.IsImmortal ~= mod.DataTable[wispIndex].IsImmortal then
+		if mod.DataTable[wispIndex].IsImmortal > 0 then
+			wisp:SetColor(Color(232, 240, 255, 0.02, 0, 0, 0), -1, 1, false, false)
+		end
+		wispData.IsImmortal = mod.DataTable[wispIndex].IsImmortal
+	end
+end
+mod:AddCallback(ModCallbacks.MC_FAMILIAR_UPDATE, mod.ImmortalWispUpdate, FamiliarVariant.WISP)
 
 function mod:SpriteChange(entity)
 	if entity.SubType == HeartSubType.HEART_IMMORTAL then

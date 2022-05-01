@@ -5,6 +5,8 @@ local json = require("json")
 
 HeartSubType.HEART_IMMORTAL = 902
 
+mod.DataTable = {}
+
 if EID then
 	EID:setModIndicatorName("Immortal Heart")
 	local iconSprite = Sprite()
@@ -29,26 +31,25 @@ end
 function onStart(_, bool)
 	for i = 0, game:GetNumPlayers() - 1 do
 		local player = Isaac.GetPlayer(i)
-		local data = mod:GetData(player)
-		if bool == false or data.ComplianceImmortalHeart == nil then
-			data.ComplianceImmortalHeart = 0
+		local index = mod:GetEntityIndex(player)
+		if bool == false or mod.DataTable[index].ComplianceImmortalHeart == nil then
+			mod.DataTable[index].ComplianceImmortalHeart = 0
 		end
 	end
 end
 
-mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, onStart)
+--mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, onStart)
 
 function mod:OnSave(isSaving)
 	local save = {}
 	if isSaving then
-		local saveData = {}
-		for i = 0, game:GetNumPlayers() - 1 do
-			local player = Isaac.GetPlayer(i)
-			local data = mod:GetData(player)
-			saveData["player_"..tostring(i+1)] = data
-			saveData["player_"..tostring(i+1)].i = nil
+		save.PlayerData = {}
+		local id = 1
+		for key,value in pairs(mod.DataTable) do
+			if value ~= nil and key ~= nil then
+				save.PlayerData[tostring(key)] = value
+			end
 		end
-		save.PlayerData = saveData
 	end
 	save.SpriteStyle = mod.optionNum
 	save.AppearanceChance = mod.optionChance
@@ -59,14 +60,13 @@ end
 mod:AddCallback(ModCallbacks.MC_PRE_GAME_EXIT, mod.OnSave)
 
 function mod:OnLoad(isLoading)
+	mod.DataTable = {}
 	if mod:HasData() then
 		local save = json.decode(mod:LoadData())
 		if isLoading then
-			local loadData = save.PlayerData
-			for i = 0, game:GetNumPlayers() - 1 do
-				local player = Isaac.GetPlayer(i)
-				if loadData["player_"..tostring(i+1)] then
-					player:GetData().ImmortalHeart = loadData["player_"..tostring(i+1)]
+			for key,value in pairs(save.PlayerData) do
+				if key ~= nil then
+					mod.DataTable[tonumber(key)] = value
 				end
 			end
 		end
@@ -203,6 +203,43 @@ function mod:GetPtrHashEntity(entity)
 	return nil
 end
 
+function mod:GetEntityIndex(entity)
+	if entity then
+		if entity.Type == EntityType.ENTITY_PLAYER then
+			local player = entity:ToPlayer()
+			if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B then
+				player = player:GetOtherTwin()
+			end
+			local id = 1
+			if player:GetPlayerType() == PlayerType.PLAYER_LAZARUS2_B then
+				id = 2
+			end
+			local index = player:GetCollectibleRNG(id):GetSeed()
+			if not mod.DataTable[index] then
+				mod.DataTable[index] = {}
+			end
+			if not mod.DataTable[index].ComplianceImmortalHeart then
+				mod.DataTable[index].ComplianceImmortalHeart = 0
+			end
+			if not mod.DataTable[index].lastEternalHearts or not mod.DataTable[index].lastMaxHearts then
+				mod.DataTable[index].lastEternalHearts = 0
+				mod.DataTable[index].lastMaxHearts = 0
+			end
+			if player:GetPlayerType() == PlayerType.PLAYER_BETHANY and not mod.DataTable[index].ImmortalCharge then
+				mod.DataTable[index].ImmortalCharge = 0
+			end
+			return index
+		elseif entity.Type == EntityType.ENTITY_FAMILIAR then
+			local index = entity:ToFamiliar().InitSeed
+			if not mod.DataTable[index] then
+				mod.DataTable[index] = {}
+			end
+			return index
+		end
+	end
+	return nil
+end
+
 function mod:GetData(entity)
 	if entity and entity.GetData then	
 		local data = entity:GetData()
@@ -215,23 +252,23 @@ function mod:GetData(entity)
 end
 
 function mod:DidPlayerCollectibleCountJustChange(player)
-	local data = mod:GetData(player)
-	if data.didCollectibleCountJustChange then
+	local index = mod:GetEntityIndex(player)
+	if mod.DataTable[index].didCollectibleCountJustChange then
 		return true
 	end
 	return false
 end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, function(_, player)
-	local data = mod:GetData(player)
+	local index = mod:GetEntityIndex(player)
 	local currentCollectibleCount = player:GetCollectibleCount()
-	if not data.lastCollectibleCount then
-		data.lastCollectibleCount = currentCollectibleCount
+	if not mod.DataTable[index].lastCollectibleCount then
+		mod.DataTable[index].lastCollectibleCount = currentCollectibleCount
 	end
-	data.didCollectibleCountJustChange = false
-	if data.lastCollectibleCount ~= currentCollectibleCount then
-		data.didCollectibleCountJustChange = true
+	mod.DataTable[index].didCollectibleCountJustChange = false
+	if mod.DataTable[index].lastCollectibleCount ~= currentCollectibleCount then
+		mod.DataTable[index].didCollectibleCountJustChange = true
 	end
-	data.lastCollectibleCount = currentCollectibleCount
+	mod.DataTable[index].lastCollectibleCount = currentCollectibleCount
 end)
 
 --[[mod.entitySpawnData = {}
