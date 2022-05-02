@@ -329,7 +329,6 @@ function mod:HeartHandling(player)
 		end
 		if player:GetSoulHearts() % 2 ~= 0 then
 			if ComplianceImmortal.GetImmortalHearts(player) % 2 == 0 then
-				print(player:GetPlayerType())
 				player:AddSoulHearts(1)
 			end
 		end
