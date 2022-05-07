@@ -44,7 +44,6 @@ function mod:OnSave(isSaving)
 	local save = {}
 	if isSaving then
 		save.PlayerData = {}
-		local id = 1
 		for key,value in pairs(mod.DataTable) do
 			if value ~= nil and key ~= nil then
 				save.PlayerData[tostring(key)] = value
