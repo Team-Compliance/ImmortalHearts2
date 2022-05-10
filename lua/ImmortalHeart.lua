@@ -368,12 +368,14 @@ function mod:DefaultWispInit(wisp)
 	local player = wisp.Player
 	local index = mod:GetEntityIndex(player)
 	local wispIndex = mod:GetEntityIndex(wisp)
-	if mod.DataTable[index].ImmortalCharge > 0 then
-		wisp:SetColor(Color(232, 240, 255, 0.02, 0, 0, 0), -1, 1, false, false)
-		mod.DataTable[index].ImmortalCharge = mod.DataTable[index].ImmortalCharge - 1
-		mod.DataTable[wispIndex].IsImmortal = 1
-	else
-		mod.DataTable[wispIndex].IsImmortal = 0
+	if player:GetPlayerType() == PlayerType.PLAYER_BETHANY then
+		if mod.DataTable[index].ImmortalCharge > 0 then
+			wisp:SetColor(Color(232, 240, 255, 0.02, 0, 0, 0), -1, 1, false, false)
+			mod.DataTable[index].ImmortalCharge = mod.DataTable[index].ImmortalCharge - 1
+			mod.DataTable[wispIndex].IsImmortal = 1
+		else
+			mod.DataTable[wispIndex].IsImmortal = 0
+		end
 	end
 end
 mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, mod.DefaultWispInit, FamiliarVariant.WISP)
