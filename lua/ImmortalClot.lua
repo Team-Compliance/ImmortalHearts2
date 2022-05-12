@@ -111,7 +111,7 @@ mod:AddCallback(ModCallbacks.MC_PRE_USE_ITEM, mod.UseSumptoriumNoTEve, Collectib
 function mod:TEveSpawn(baby)
 	local player = baby.Player
 	local index = mod:GetEntityIndex(player)
-	if (player:GetPlayerType() == PlayerType.PLAYER_EVE_B) and (mod.DataTable[index].ComplianceImmortalHeart > 0) and (baby.SubType == 1) then
+	if (player:GetPlayerType() == PlayerType.PLAYER_EVE_B) and (mod.DataTable[index].ComplianceImmortalHeart > 0) and (baby.SubType == 2) then
 		if mod.DataTable[index].ComplianceImmortalHeart % 2 ~= 0 then
 			SFXManager():Play(Isaac.GetSoundIdByName("ImmortalHeartBreak"),1,0)
 			local shatterSPR = Isaac.Spawn(EntityType.ENTITY_EFFECT, 904, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect():GetSprite()
