@@ -4,10 +4,9 @@ local sfx = SFXManager()
 local immortalBreakSfx = Isaac.GetSoundIdByName("ImmortalHeartBreak")
 local immortalSfx = Isaac.GetSoundIdByName("immortal")
 local screenHelper = require("lua.screenhelper")
-
 -- API functions --
 
-function ComplianceImmortal.AddImmortalHearts(player, amount, data) -- data is optional
+function ComplianceImmortal.AddImmortalHearts(player, amount)
 	local index = mod:GetEntityIndex(player)
 	if amount % 2 == 0 then
 		if player:GetSoulHearts() % 2 ~= 0 then
@@ -16,7 +15,9 @@ function ComplianceImmortal.AddImmortalHearts(player, amount, data) -- data is o
 	end
 	
 	if player:CanPickBlackHearts() or amount < 0 then
-		player:AddBlackHearts(amount)
+		local newamount = amount - amount % 2
+		player:AddSoulHearts(amount - newamount)
+		player:AddBlackHearts(newamount)
 	end
 	if player:GetPlayerType() == PlayerType.PLAYER_BETHANY then
 		mod.DataTable[index].ImmortalCharge = mod.DataTable[index].ImmortalCharge + math.ceil(amount/2)
@@ -26,7 +27,8 @@ function ComplianceImmortal.AddImmortalHearts(player, amount, data) -- data is o
 end
 
 function ComplianceImmortal.GetImmortalHearts(player)
-	return mod.DataTable[mod:GetEntityIndex(player)].ComplianceImmortalHeart
+	local index = mod:GetEntityIndex(player)
+	return mod.DataTable[index].ComplianceImmortalHeart
 end
 
 function ComplianceImmortal.HealImmortalHeart(player) -- returns true if successful
@@ -75,13 +77,15 @@ function mod:ImmortalHeartCollision(entity, collider)
 end
 mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, mod.ImmortalHeartCollision, PickupVariant.PICKUP_HEART)
 
+local show = true
 function mod:shouldDeHook()
 	local reqs = {
 	  not game:GetHUD():IsVisible(),
 	  game:GetSeeds():HasSeedEffect(SeedEffect.SEED_NO_HUD),
-	  game:GetLevel():GetCurses() & LevelCurse.CURSE_OF_THE_UNKNOWN ~= 0
+	  game:GetLevel():GetCurses() & LevelCurse.CURSE_OF_THE_UNKNOWN ~= 0,
+	  not show
 	}
-	return reqs[1] or reqs[2] or reqs[3]
+	return reqs[1] or reqs[2] or reqs[3] or reqs[4]
 end
 
 local function renderingHearts(player,playeroffset)
@@ -136,7 +140,6 @@ local function renderingHearts(player,playeroffset)
 		and pType ~= PlayerType.PLAYER_JACOB2_B then
 			anim = anim.."Mantle"
 		end
-				
 		ImmortalSplash.Color = Color(1,1,1,transperancy)
 		--[[local rendering = ImmortalSplash.Color.A > 0.1 or game:GetFrameCount() < 1
 		if game:IsPaused() then
@@ -185,6 +188,10 @@ local function renderingHearts(player,playeroffset)
 end
 
 function mod:onRender(shadername)
+	local but = Input.IsButtonPressed(Keyboard.KEY_PAGE_UP,0)
+	if but then
+		show = not show
+	end
 	if shadername ~= "Immortal Hearts" then return end
 	if mod:shouldDeHook() then return end
 	local isJacobFirst = false
@@ -309,29 +316,34 @@ function mod:HeartHandling(player)
 		local heartIndex = math.ceil(mod.DataTable[index].ComplianceImmortalHeart/2) - 1
 		for i=0, heartIndex do
 			local ExtraHearts = math.ceil(player:GetSoulHearts() / 2) + player:GetBoneHearts() - i
-			local imHeartLastIndex = player:GetSoulHearts() - (1 - player:GetSoulHearts() % 2) - i * 2
-			if (player:IsBoneHeart(ExtraHearts - 1)) or not player:IsBlackHeart(player:GetSoulHearts() - (1 - player:GetSoulHearts() % 2) - i * 2) then
-				for j = imHeartLastIndex, imHeartLastIndex - (heartIndex + 1) * 2, -2 do
+			local imHeartLastIndex = player:GetSoulHearts() - (1 - player:GetSoulHearts() % 2)
+			if player:IsBoneHeart(ExtraHearts - 1) or not player:IsBlackHeart(imHeartLastIndex - i * 2) then
+				for j = imHeartLastIndex , (imHeartLastIndex - 2 - heartIndex * 2), -2 do
 					player:RemoveBlackHeart(j)
 				end
-				player:AddSoulHearts(-mod.DataTable[index].ComplianceImmortalHeart)
-				player:AddBlackHearts(mod.DataTable[index].ComplianceImmortalHeart)
-			end
-			if player:GetEffectiveMaxHearts() + player:GetSoulHearts() == player:GetHeartLimit() and mod.DataTable[index].ComplianceImmortalHeart == 1 then
-				player:AddSoulHearts(-1)
+				local complh = ComplianceImmortal.GetImmortalHearts(player)
+				ComplianceImmortal.AddImmortalHearts(player,-complh)
+				ComplianceImmortal.AddImmortalHearts(player,complh)
+				break
+				--player:AddSoulHearts(-mod.DataTable[index].ComplianceImmortalHeart)
+				--player:AddBlackHearts(mod.DataTable[index].ComplianceImmortalHeart)
 			end
 		end
 		
-		if player:GetSoulHearts() % 2 == 0 then
-			if ComplianceImmortal.GetImmortalHearts(player) % 2 ~= 0 then
-				mod.DataTable[index].ComplianceImmortalHeart = mod.DataTable[index].ComplianceImmortalHeart + 1
-			end
-		end
+		--if player:GetEffectiveMaxHearts() + player:GetSoulHearts() == player:GetHeartLimit() and mod.DataTable[index].ComplianceImmortalHeart % 2 == 1 then
+		--	player:AddSoulHearts(-1)
+		--end
 		if player:GetSoulHearts() % 2 ~= 0 then
 			if ComplianceImmortal.GetImmortalHearts(player) % 2 == 0 then
 				player:AddSoulHearts(1)
 			end
 		end
+		if player:GetSoulHearts() % 2 == 0 then
+			if ComplianceImmortal.GetImmortalHearts(player) % 2 ~= 0 then
+				mod.DataTable[index].ComplianceImmortalHeart = mod.DataTable[index].ComplianceImmortalHeart + 1
+			end
+		end
+
 	end
 end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.HeartHandling)
@@ -368,14 +380,12 @@ function mod:DefaultWispInit(wisp)
 	local player = wisp.Player
 	local index = mod:GetEntityIndex(player)
 	local wispIndex = mod:GetEntityIndex(wisp)
-	if player:GetPlayerType() == PlayerType.PLAYER_BETHANY then
-		if mod.DataTable[index].ImmortalCharge > 0 then
-			wisp:SetColor(Color(232, 240, 255, 0.02, 0, 0, 0), -1, 1, false, false)
-			mod.DataTable[index].ImmortalCharge = mod.DataTable[index].ImmortalCharge - 1
-			mod.DataTable[wispIndex].IsImmortal = 1
-		else
-			mod.DataTable[wispIndex].IsImmortal = 0
-		end
+	if mod.DataTable[index].ImmortalCharge > 0 then
+		wisp:SetColor(Color(232, 240, 255, 0.02, 0, 0, 0), -1, 1, false, false)
+		mod.DataTable[index].ImmortalCharge = mod.DataTable[index].ImmortalCharge - 1
+		mod.DataTable[wispIndex].IsImmortal = 1
+	else
+		mod.DataTable[wispIndex].IsImmortal = 0
 	end
 end
 mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, mod.DefaultWispInit, FamiliarVariant.WISP)
