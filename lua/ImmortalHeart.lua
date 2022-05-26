@@ -77,15 +77,13 @@ function mod:ImmortalHeartCollision(entity, collider)
 end
 mod:AddCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, mod.ImmortalHeartCollision, PickupVariant.PICKUP_HEART)
 
-local show = true
 function mod:shouldDeHook()
 	local reqs = {
 	  not game:GetHUD():IsVisible(),
 	  game:GetSeeds():HasSeedEffect(SeedEffect.SEED_NO_HUD),
 	  game:GetLevel():GetCurses() & LevelCurse.CURSE_OF_THE_UNKNOWN ~= 0,
-	  not show
 	}
-	return reqs[1] or reqs[2] or reqs[3] or reqs[4]
+	return reqs[1] or reqs[2] or reqs[3]
 end
 
 local function renderingHearts(player,playeroffset)
@@ -188,10 +186,6 @@ local function renderingHearts(player,playeroffset)
 end
 
 function mod:onRender(shadername)
-	local but = Input.IsButtonPressed(Keyboard.KEY_PAGE_UP,0)
-	if but then
-		show = not show
-	end
 	if shadername ~= "Immortal Hearts" then return end
 	if mod:shouldDeHook() then return end
 	local isJacobFirst = false
