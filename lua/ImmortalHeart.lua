@@ -86,6 +86,17 @@ function mod:shouldDeHook()
 	return reqs[1] or reqs[2] or reqs[3]
 end
 
+local pauseColorTimer = 0
+
+local function playersHeartPos(i,hearts,hpOffset,isForgotten)
+	if i == 1 then return Options.HUDOffset * Vector(20, 12) + Vector(hearts*6+36+hpOffset, 12) + Vector(0,10) * isForgotten end
+	if i == 2 then return screenHelper.GetScreenTopRight(0) + Vector(hearts*6+hpOffset-123,12) + Options.HUDOffset * Vector(-20*1.2, 12) + Vector(0,20) * isForgotten end
+	if i == 3 then return screenHelper.GetScreenBottomLeft(0) + Vector(hearts*6+hpOffset+46,-27) + Options.HUDOffset * Vector(20*1.1, -12*0.5) + Vector(0,20) * isForgotten end
+	if i == 4 then return screenHelper.GetScreenBottomRight(0) + Vector(hearts*6+hpOffset-131,-27) + Options.HUDOffset * Vector(-20*0.8, -12*0.5) + Vector(0,20) * isForgotten end
+	if i == 5 then return screenHelper.GetScreenBottomRight(0) + Vector((-hearts)*6+hpOffset-36,-27) + Options.HUDOffset * Vector(-20*0.8, -12*0.5) end
+	return Options.HUDOffset * Vector(20, 12)
+end
+
 local function renderingHearts(player,playeroffset)
 	local index = mod:GetEntityIndex(player)
 	local pType = player:GetPlayerType()
@@ -104,19 +115,17 @@ local function renderingHearts(player,playeroffset)
 	local getMaxHearts = player:GetEffectiveMaxHearts() + (player:GetSoulHearts() + player:GetSoulHearts() % 2)
 	local eternalHeart = player:GetEternalHearts()
 	for i=0, heartIndex do
-		local ImmortalSplash = Sprite()
-		ImmortalSplash:Load("gfx/ui/ui_remix_hearts.anm2",true)
 
 		local hearts = ((CanOnlyHaveSoulHearts(player) and player:GetBoneHearts()*2 or player:GetEffectiveMaxHearts()) + player:GetSoulHearts()) - (i * 2)
 		local hpOffset = hearts%2 ~= 0 and (playeroffset == 5 and -6 or 6) or 0
-		local playersHeartPos = {
+		--[[local playersHeartPos = {
 			[1] = Options.HUDOffset * Vector(20, 12) + Vector(hearts*6+36+hpOffset, 12) + Vector(0,10) * isForgotten,
 			[2] = screenHelper.GetScreenTopRight(0) + Vector(hearts*6+hpOffset-123,12) + Options.HUDOffset * Vector(-20*1.2, 12) + Vector(0,20) * isForgotten,
 			[3] = screenHelper.GetScreenBottomLeft(0) + Vector(hearts*6+hpOffset+46,-27) + Options.HUDOffset * Vector(20*1.1, -12*0.5) + Vector(0,20) * isForgotten,
 			[4] = screenHelper.GetScreenBottomRight(0) + Vector(hearts*6+hpOffset-131,-27) + Options.HUDOffset * Vector(-20*0.8, -12*0.5) + Vector(0,20) * isForgotten,
 			[5] = screenHelper.GetScreenBottomRight(0) + Vector((-hearts)*6+hpOffset-36,-27) + Options.HUDOffset * Vector(-20*0.8, -12*0.5)
-		}
-		local offset = playersHeartPos[playeroffset]
+		}]]
+		local offset = playersHeartPos(playeroffset,hearts,hpOffset,isForgotten)--playersHeartPos[playeroffset]
 		local offsetCol = (playeroffset == 1 or playeroffset == 5) and 13 or 7
 		offset.X = offset.X  - math.floor(hearts / offsetCol) * (playeroffset == 5 and (-72) or (playeroffset == 1 and 72 or 36))
 		offset.Y = offset.Y + math.floor(hearts / offsetCol) * 10
@@ -138,50 +147,22 @@ local function renderingHearts(player,playeroffset)
 		and pType ~= PlayerType.PLAYER_JACOB2_B then
 			anim = anim.."Mantle"
 		end
-		ImmortalSplash.Color = Color(1,1,1,transperancy)
-		--[[local rendering = ImmortalSplash.Color.A > 0.1 or game:GetFrameCount() < 1
+		mod.ImmortalSplash.Color = Color(1,1,1,transperancy)
+		--[[local rendering = mod.ImmortalSplash.Color.A > 0.1 or game:GetFrameCount() < 1
 		if game:IsPaused() then
 			pauseColorTimer = pauseColorTimer + 1
-			if pauseColorTimer >= 20 and pauseColorTimer <= 30 and rendering then
-				ImmortalSplash.Color = Color.Lerp(ImmortalSplash.Color,Color(1,1,1,0.1),0.1)
+			if pauseColorTimer >= 40 and pauseColorTimer <= 60 and rendering then
+				mod.ImmortalSplash.Color = Color.Lerp(mod.ImmortalSplash.Color,Color(1,1,1,0.1),0.1)
 			end
 		else
 			pauseColorTimer = 0
-			ImmortalSplash.Color = Color(1,1,1,transperancy)
+			mod.ImmortalSplash.Color = Color.Lerp(mod.ImmortalSplash.Color,Color(1,1,1,1),0.1)--Color(1,1,1,transperancy)
 		end]]
-		ImmortalSplash:Play(anim, true)
-		local spritename = "gfx/ui/ui_remix_hearts"
-		if mod.optionNum == 2 then
-			spritename = spritename.."_aladar"
+		if not mod.ImmortalSplash:IsPlaying(anim) then 
+			mod.ImmortalSplash:Play(anim, true)
 		end
-		if mod.optionNum == 3 then
-			spritename = spritename.."_peas"
-		end
-		if mod.optionNum == 4 then
-			spritename = spritename.."_beautiful"
-		end
-		if mod.optionNum == 5 then 
-			spritename = spritename.."_goncholito"
-		end
-		if mod.optionNum == 6 then
-			spritename = spritename.."_flashy"
-		end
-		if mod.optionNum == 7 then
-			spritename = spritename.."_bettericons"
-		end
-		if mod.optionNum == 8 then
-			spritename = spritename.."_eternalupdate"
-		end
-		if mod.optionNum == 9 then
-			spritename = spritename.."_duxi"
-		end
-		spritename = spritename..".png"
-		for j = 0,4 do
-			ImmortalSplash:ReplaceSpritesheet(j,spritename)
-		end
-		ImmortalSplash:LoadGraphics()
-		ImmortalSplash.FlipX = playeroffset == 5
-		ImmortalSplash:Render(Vector(offset.X, offset.Y), Vector(0,0), Vector(0,0))
+		mod.ImmortalSplash.FlipX = playeroffset == 5
+		mod.ImmortalSplash:Render(Vector(offset.X, offset.Y), Vector(0,0), Vector(0,0))
 	end
 end
 

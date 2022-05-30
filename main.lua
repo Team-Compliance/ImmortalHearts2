@@ -6,6 +6,8 @@ local json = require("json")
 HeartSubType.HEART_IMMORTAL = 902
 
 mod.DataTable = {}
+mod.ImmortalSplash = Sprite()
+mod.ImmortalSplash:Load("gfx/ui/ui_remix_hearts.anm2",true)
 
 if EID then
 	EID:setModIndicatorName("Immortal Heart")
@@ -97,7 +99,7 @@ function mod:PostUpdateAchiv()
 	end
 end
 
-mod:AddCallback(ModCallbacks.MC_POST_UPDATE, mod.PostUpdateAchiv)
+--mod:AddCallback(ModCallbacks.MC_POST_UPDATE, mod.PostUpdateAchiv)
 
 -----------------------------------
 --Helper Functions (thanks piber)--
