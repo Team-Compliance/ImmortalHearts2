@@ -336,20 +336,16 @@ function mod:ImmortalHeal()
 end
 mod:AddCallback(ModCallbacks.MC_PRE_SPAWN_CLEAN_AWARD, mod.ImmortalHeal)
 
-function mod:PreEternalSpawn(entityType, variant, subType, position, velocity, spawner, seed)
+function mod:PreEternalSpawn(heart)
 	local rng = RNG()
-	if entityType == EntityType.ENTITY_PICKUP then
-		if variant == PickupVariant.PICKUP_HEART then
-			if subType == HeartSubType.HEART_ETERNAL then
-				rng:SetSeed(seed, 1)
-				if rng:RandomFloat() >= (1 - mod.optionChance / 100) then
-					return {entityType, variant, HeartSubType.HEART_IMMORTAL, seed}
-				end
-			end
+	if heart.SubType == HeartSubType.HEART_ETERNAL and heart:GetSprite():IsPlaying("Appear") then
+		rng:SetSeed(heart.InitSeed, 35)
+		if rng:RandomFloat() >= (1 - mod.optionChance / 100) then
+			heart:Morph(heart.Type,heart.Variant,HeartSubType.HEART_IMMORTAL,true,true)
 		end
 	end
 end
-mod:AddCallback(ModCallbacks.MC_PRE_ENTITY_SPAWN, mod.PreEternalSpawn)
+mod:AddCallback(ModCallbacks.MC_POST_PICKUP_INIT, mod.PreEternalSpawn, PickupVariant.PICKUP_HEART)
 
 function mod:DefaultWispInit(wisp)
 	local player = wisp.Player
