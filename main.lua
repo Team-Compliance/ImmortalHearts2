@@ -17,10 +17,47 @@ if EID then
 	EID:setModIndicatorIcon("ImmortalHeart")
 end
 
+function mod:GetEntityIndex(entity)
+	if entity then
+		if entity.Type == EntityType.ENTITY_PLAYER then
+			local player = entity:ToPlayer()
+			if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B then
+				player = player:GetOtherTwin()
+			end
+			local id = 1
+			if player:GetPlayerType() == PlayerType.PLAYER_LAZARUS2_B then
+				id = 2
+			end
+			local index = player:GetCollectibleRNG(id):GetSeed()
+			if not mod.DataTable[index] then
+				mod.DataTable[index] = {}
+			end
+			if not mod.DataTable[index].ComplianceImmortalHeart then
+				mod.DataTable[index].ComplianceImmortalHeart = 0
+			end
+			if not mod.DataTable[index].lastEternalHearts or not mod.DataTable[index].lastMaxHearts then
+				mod.DataTable[index].lastEternalHearts = 0
+				mod.DataTable[index].lastMaxHearts = 0
+			end
+			if player:GetPlayerType() == PlayerType.PLAYER_BETHANY and not mod.DataTable[index].ImmortalCharge then
+				mod.DataTable[index].ImmortalCharge = 0
+			end
+			return index
+		elseif entity.Type == EntityType.ENTITY_FAMILIAR then
+			local index = entity:ToFamiliar().InitSeed
+			if not mod.DataTable[index] then
+				mod.DataTable[index] = {}
+			end
+			return index
+		end
+	end
+	return nil
+end
+
 include("lua/ModConfigMenu.lua")
 include("lua/ImmortalHeart.lua")
 include("lua/ImmortalClot.lua")
-include("lua/achievement_display_api.lua")
+--include("lua/achievement_display_api.lua")
 
 if MinimapAPI then
     local frame = 1
@@ -199,43 +236,6 @@ function mod:GetPtrHashEntity(entity)
 			if GetPtrHash(entity) == GetPtrHash(matchEntity) then
 				return matchEntity
 			end
-		end
-	end
-	return nil
-end
-
-function mod:GetEntityIndex(entity)
-	if entity then
-		if entity.Type == EntityType.ENTITY_PLAYER then
-			local player = entity:ToPlayer()
-			if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B then
-				player = player:GetOtherTwin()
-			end
-			local id = 1
-			if player:GetPlayerType() == PlayerType.PLAYER_LAZARUS2_B then
-				id = 2
-			end
-			local index = player:GetCollectibleRNG(id):GetSeed()
-			if not mod.DataTable[index] then
-				mod.DataTable[index] = {}
-			end
-			if not mod.DataTable[index].ComplianceImmortalHeart then
-				mod.DataTable[index].ComplianceImmortalHeart = 0
-			end
-			if not mod.DataTable[index].lastEternalHearts or not mod.DataTable[index].lastMaxHearts then
-				mod.DataTable[index].lastEternalHearts = 0
-				mod.DataTable[index].lastMaxHearts = 0
-			end
-			if player:GetPlayerType() == PlayerType.PLAYER_BETHANY and not mod.DataTable[index].ImmortalCharge then
-				mod.DataTable[index].ImmortalCharge = 0
-			end
-			return index
-		elseif entity.Type == EntityType.ENTITY_FAMILIAR then
-			local index = entity:ToFamiliar().InitSeed
-			if not mod.DataTable[index] then
-				mod.DataTable[index] = {}
-			end
-			return index
 		end
 	end
 	return nil

@@ -55,6 +55,7 @@ end
 function mod:ImmortalHeartCollision(entity, collider)
 	if collider.Type == EntityType.ENTITY_PLAYER then
 		local player = collider:ToPlayer()
+		if player.Parent ~= nil then return false end
 		if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B then
 			player = player:GetMainTwin()
 		end
@@ -170,31 +171,36 @@ function mod:onRender(shadername)
 	if shadername ~= "Immortal Hearts" then return end
 	if mod:shouldDeHook() then return end
 	local isJacobFirst = false
+	local pNum = 1
 	for i = 0, game:GetNumPlayers() - 1 do
 		local player = Isaac.GetPlayer(i)
-		local index = mod:GetEntityIndex(player)
-		if i == 0 and player:GetPlayerType() == PlayerType.PLAYER_JACOB then
-			isJacobFirst = true
-		end
-		
-		if (player:GetPlayerType() == PlayerType.PLAYER_LAZARUS_B or player:GetPlayerType() == PlayerType.PLAYER_LAZARUS2_B) then
-			if player:GetOtherTwin() then
-				if mod.DataTable[index].i and mod.DataTable[index].i == i then
+		if player.Parent == nil then
+			local index = mod:GetEntityIndex(player)
+			if i == 0 and player:GetPlayerType() == PlayerType.PLAYER_JACOB then
+				isJacobFirst = true
+			end
+			
+			if (player:GetPlayerType() == PlayerType.PLAYER_LAZARUS_B or player:GetPlayerType() == PlayerType.PLAYER_LAZARUS2_B) then
+				if player:GetOtherTwin() then
+					if mod.DataTable[index].i and mod.DataTable[index].i == i then
+						mod.DataTable[index].i = nil
+					end
+					if not mod.DataTable[index].i then
+						local otherIndex = mod:GetEntityIndex(player:GetOtherTwin())
+						mod.DataTable[otherIndex].i = i
+					end
+				elseif mod.DataTable[index].i then
 					mod.DataTable[index].i = nil
 				end
-				if not mod.DataTable[index].i then
-					local otherIndex = mod:GetEntityIndex(player:GetOtherTwin())
-					mod.DataTable[otherIndex].i = i
-				end
-			elseif mod.DataTable[index].i then
-				mod.DataTable[index].i = nil
 			end
-		end
-		if player:GetPlayerType() ~= PlayerType.PLAYER_THESOUL_B and not player.Parent and not mod.DataTable[index].i then
-			if player:GetPlayerType() == PlayerType.PLAYER_ESAU and isJacobFirst then
-				renderingHearts(player,5)	
-			elseif player:GetPlayerType() ~= PlayerType.PLAYER_ESAU then
-				renderingHearts(player,i+1)
+			if player:GetPlayerType() ~= PlayerType.PLAYER_THESOUL_B and not mod.DataTable[index].i then
+				if player:GetPlayerType() == PlayerType.PLAYER_ESAU and isJacobFirst then
+					renderingHearts(player,5)	
+				elseif player:GetPlayerType() ~= PlayerType.PLAYER_ESAU then
+					renderingHearts(player,pNum)
+					pNum = pNum + 1
+				end
+				if pNum > 4 then break end
 			end
 		end
 	end
@@ -204,7 +210,7 @@ mod:AddCallback(ModCallbacks.MC_GET_SHADER_PARAMS, mod.onRender)
 
 function mod:ImmortalBlock(entity, damage, flag, source, cooldown)
 	local player = entity:ToPlayer()
-	if player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN then return nil end
+	if player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN or player.Parent ~= nil then return nil end
 	local index = mod:GetEntityIndex(player)
 	player = player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN_B and player:GetOtherTwin() or player
 	if mod.DataTable[index].ComplianceImmortalHeart > 0 and damage > 0 then
@@ -248,6 +254,7 @@ end
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, mod.ImmortalBlock, EntityType.ENTITY_PLAYER)
 
 function mod:ActOfImmortal(player)
+	if player.Parent ~= nil then return end
 	if not player:HasCollectible(CollectibleType.COLLECTIBLE_ACT_OF_CONTRITION) then return end
 	if mod.optionContrition ~= 1 then return end
 	local index = mod:GetEntityIndex(player)
@@ -282,6 +289,7 @@ end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.ActOfImmortal)
 
 function mod:HeartHandling(player)
+	if player.Parent ~= nil then return end
 	if player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN then
 		player = player:GetSubPlayer()
 	end
@@ -300,14 +308,8 @@ function mod:HeartHandling(player)
 				ComplianceImmortal.AddImmortalHearts(player,-complh)
 				ComplianceImmortal.AddImmortalHearts(player,complh)
 				break
-				--player:AddSoulHearts(-mod.DataTable[index].ComplianceImmortalHeart)
-				--player:AddBlackHearts(mod.DataTable[index].ComplianceImmortalHeart)
 			end
 		end
-		
-		--if player:GetEffectiveMaxHearts() + player:GetSoulHearts() == player:GetHeartLimit() and mod.DataTable[index].ComplianceImmortalHeart % 2 == 1 then
-		--	player:AddSoulHearts(-1)
-		--end
 		if player:GetSoulHearts() % 2 ~= 0 then
 			if ComplianceImmortal.GetImmortalHearts(player) % 2 == 0 then
 				player:AddSoulHearts(1)
