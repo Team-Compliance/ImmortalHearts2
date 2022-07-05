@@ -35,6 +35,9 @@ function mod:GetEntityIndex(entity)
 			if not mod.DataTable[index].ComplianceImmortalHeart then
 				mod.DataTable[index].ComplianceImmortalHeart = 0
 			end
+			if not mod.DataTable[index].PrevRoomIH then
+				mod.DataTable[index].PrevRoomIH = 0
+			end
 			if not mod.DataTable[index].lastEternalHearts or not mod.DataTable[index].lastMaxHearts then
 				mod.DataTable[index].lastEternalHearts = 0
 				mod.DataTable[index].lastMaxHearts = 0
@@ -57,6 +60,7 @@ end
 include("lua/ModConfigMenu.lua")
 include("lua/ImmortalHeart.lua")
 include("lua/ImmortalClot.lua")
+include("lua/ghg.lua")
 --include("lua/achievement_display_api.lua")
 
 if MinimapAPI then
