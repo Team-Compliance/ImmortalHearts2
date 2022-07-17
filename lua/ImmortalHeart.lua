@@ -90,7 +90,7 @@ end
 local pauseColorTimer = 0
 
 local function playersHeartPos(i,hearts,hpOffset,isForgotten)
-	if i == 1 then return Options.HUDOffset * Vector(20, 12) + Vector(hearts*6+36+hpOffset, 12) + Vector(0,10) * isForgotten end
+	if i == 1 then return Options.HUDOffset * Vector(20, 12) + Vector(hearts*6+35+hpOffset, 12) + Vector(0,10) * isForgotten end
 	if i == 2 then return screenHelper.GetScreenTopRight(0) + Vector(hearts*6+hpOffset-123,12) + Options.HUDOffset * Vector(-20*1.2, 12) + Vector(0,20) * isForgotten end
 	if i == 3 then return screenHelper.GetScreenBottomLeft(0) + Vector(hearts*6+hpOffset+46,-27) + Options.HUDOffset * Vector(20*1.1, -12*0.5) + Vector(0,20) * isForgotten end
 	if i == 4 then return screenHelper.GetScreenBottomRight(0) + Vector(hearts*6+hpOffset-131,-27) + Options.HUDOffset * Vector(-20*0.8, -12*0.5) + Vector(0,20) * isForgotten end
@@ -210,45 +210,49 @@ mod:AddCallback(ModCallbacks.MC_GET_SHADER_PARAMS, mod.onRender)
 
 function mod:ImmortalBlock(entity, damage, flag, source, cooldown)
 	local player = entity:ToPlayer()
-	if player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN or player.Parent ~= nil then return nil end
+	if player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN then return nil end
 	local index = mod:GetEntityIndex(player)
+	print(flag)
 	player = player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN_B and player:GetOtherTwin() or player
-	if mod.DataTable[index].ComplianceImmortalHeart > 0 and damage > 0 then
-		if not mod.DataTable[index].ImmortalTakeDmg and source.Type ~= EntityType.ENTITY_DARK_ESAU then
+	if mod.DataTable[index].ComplianceImmortalHeart > 0 and damage > 0 and player:GetDamageCooldown() <= 0 then
+		if source.Type ~= EntityType.ENTITY_DARK_ESAU then
 			if flag & DamageFlag.DAMAGE_FAKE == 0 then
 				if not ((flag & DamageFlag.DAMAGE_RED_HEARTS == DamageFlag.DAMAGE_RED_HEARTS or player:HasTrinket(TrinketType.TRINKET_CROW_HEART)) and player:GetHearts() > 0) then
-					local isLastImmortalEternal = mod.DataTable[index].ComplianceImmortalHeart == 1 and player:GetSoulHearts() == 1 and player:GetEffectiveMaxHearts() == 0 and player:GetEternalHearts() > 0
+					local isLastImmortalEternal = mod.DataTable[index].ComplianceImmortalHeart == damage and player:GetSoulHearts() == damage and player:GetEffectiveMaxHearts() == 0 and player:GetEternalHearts() > 0
 					if (mod.DataTable[index].ComplianceImmortalHeart % 2 ~= 0) and not isLastImmortalEternal then
 						sfx:Play(immortalBreakSfx,1,0)
 						local shatterSPR = Isaac.Spawn(EntityType.ENTITY_EFFECT, 904, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect():GetSprite()
 						shatterSPR.PlaybackSpeed = 2
-						local NumSoulHearts = player:GetSoulHearts() - (1 - player:GetSoulHearts() % 2)
-						player:RemoveBlackHeart(NumSoulHearts)
+						for i = 0, damage / 2 do
+							local NumSoulHearts = player:GetSoulHearts() - (1 - player:GetSoulHearts() % 2) - 2 * i
+							player:RemoveBlackHeart(NumSoulHearts)
+						end
 					end
 					--Checking for Half Immortal and Eternal heart
 					if not isLastImmortalEternal  then
-						mod.DataTable[index].ComplianceImmortalHeart = mod.DataTable[index].ComplianceImmortalHeart - 1
+						mod.DataTable[index].TookIHDamage = true 
+						mod.DataTable[index].ComplianceImmortalHeart = mod.DataTable[index].ComplianceImmortalHeart - damage
 					end
-					mod.DataTable[index].ImmortalTakeDmg = true
-					player:TakeDamage(1,flag | DamageFlag.DAMAGE_NO_MODIFIERS,source,cooldown)
-					if mod.DataTable[index].ComplianceImmortalHeart > 0 then
-						local cd = isLastImmortalEternal and cooldown or 20
-						player:ResetDamageCooldown()
-						player:SetMinDamageCooldown(cd)
-						if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B or player:GetPlayerType() == PlayerType.PLAYER_ESAU
-						or player:GetPlayerType() == PlayerType.PLAYER_JACOB then
-							player:GetOtherTwin():ResetDamageCooldown()
-							player:GetOtherTwin():SetMinDamageCooldown(cd)		
-						end
+					if mod.DataTable[index].ComplianceImmortalHeart <= 0 and mod.DataTable[index].ComplianceHalfDamage and not player:HasCollectible(CollectibleType.COLLECTIBLE_WAFER) and not player:HasCollectible(CollectibleType.COLLECTIBLE_VIRGO) then
+						mod.DataTable[index].ComplianceHalfDamage = nil
+						player:GetEffects():RemoveCollectibleEffect(CollectibleType.COLLECTIBLE_WAFER)
+														 
+								  
+									 
+																												  
+															   
+												  
+													   
+		 
 					end
-					return false
+				 
 				end
 			end
-		else
-			mod.DataTable[index].ImmortalTakeDmg = nil
+	  
+											 
 		end
-	else
-		mod.DataTable[index].ImmortalTakeDmg = nil
+	 
+											
 	end
 end
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, mod.ImmortalBlock, EntityType.ENTITY_PLAYER)
@@ -320,7 +324,21 @@ function mod:HeartHandling(player)
 				mod.DataTable[index].ComplianceImmortalHeart = mod.DataTable[index].ComplianceImmortalHeart + 1
 			end
 		end
-
+		if mod.DataTable[index].ComplianceImmortalHeart > 0 and player:GetEffects():GetCollectibleEffectNum(CollectibleType.COLLECTIBLE_WAFER) < 1 then
+			player:GetEffects():AddCollectibleEffect(CollectibleType.COLLECTIBLE_WAFER)
+			mod.DataTable[index].ComplianceHalfDamage = true
+		end
+		if mod.DataTable[index].TookIHDamage then
+			local cd = 20
+			player:ResetDamageCooldown()
+			player:SetMinDamageCooldown(cd)
+			if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B or player:GetPlayerType() == PlayerType.PLAYER_ESAU
+			or player:GetPlayerType() == PlayerType.PLAYER_JACOB then
+				player:GetOtherTwin():ResetDamageCooldown()
+				player:GetOtherTwin():SetMinDamageCooldown(cd)		
+			end
+			mod.DataTable[index].TookIHDamage = nil
+		end
 	end
 end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.HeartHandling)
