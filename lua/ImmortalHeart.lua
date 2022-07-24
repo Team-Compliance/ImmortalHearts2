@@ -8,6 +8,9 @@ local screenHelper = require("lua.screenhelper")
 
 function ComplianceImmortal.AddImmortalHearts(player, amount)
 	local index = mod:GetEntityIndex(player)
+	if player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN then
+		player = player:GetSubPlayer()
+	end
 	if amount % 2 == 0 then
 		if player:GetSoulHearts() % 2 ~= 0 then
 			amount = amount - 1 -- if you already have a half heart, a new full immortal heart always replaces it instead of adding another heart
@@ -15,9 +18,7 @@ function ComplianceImmortal.AddImmortalHearts(player, amount)
 	end
 	
 	if player:CanPickBlackHearts() or amount < 0 then
-		local newamount = amount - amount % 2
-		player:AddSoulHearts(amount - newamount)
-		player:AddBlackHearts(newamount)
+		player:AddSoulHearts(amount)
 	end
 	if player:GetPlayerType() == PlayerType.PLAYER_BETHANY then
 		mod.DataTable[index].ImmortalCharge = mod.DataTable[index].ImmortalCharge + math.ceil(amount/2)
@@ -90,7 +91,7 @@ end
 local pauseColorTimer = 0
 
 local function playersHeartPos(i,hearts,hpOffset,isForgotten)
-	if i == 1 then return Options.HUDOffset * Vector(20, 12) + Vector(hearts*6+35+hpOffset, 12) + Vector(0,10) * isForgotten end
+	if i == 1 then return Options.HUDOffset * Vector(20, 12) + Vector(hearts*6+36+hpOffset, 12) + Vector(0,10) * isForgotten end
 	if i == 2 then return screenHelper.GetScreenTopRight(0) + Vector(hearts*6+hpOffset-123,12) + Options.HUDOffset * Vector(-20*1.2, 12) + Vector(0,20) * isForgotten end
 	if i == 3 then return screenHelper.GetScreenBottomLeft(0) + Vector(hearts*6+hpOffset+46,-27) + Options.HUDOffset * Vector(20*1.1, -12*0.5) + Vector(0,20) * isForgotten end
 	if i == 4 then return screenHelper.GetScreenBottomRight(0) + Vector(hearts*6+hpOffset-131,-27) + Options.HUDOffset * Vector(-20*0.8, -12*0.5) + Vector(0,20) * isForgotten end
@@ -212,7 +213,6 @@ function mod:ImmortalBlock(entity, damage, flag, source, cooldown)
 	local player = entity:ToPlayer()
 	if player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN then return nil end
 	local index = mod:GetEntityIndex(player)
-	print(flag)
 	player = player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN_B and player:GetOtherTwin() or player
 	if mod.DataTable[index].ComplianceImmortalHeart > 0 and damage > 0 and player:GetDamageCooldown() <= 0 then
 		if source.Type ~= EntityType.ENTITY_DARK_ESAU then
@@ -233,26 +233,13 @@ function mod:ImmortalBlock(entity, damage, flag, source, cooldown)
 						mod.DataTable[index].TookIHDamage = true 
 						mod.DataTable[index].ComplianceImmortalHeart = mod.DataTable[index].ComplianceImmortalHeart - damage
 					end
-					if mod.DataTable[index].ComplianceImmortalHeart <= 0 and mod.DataTable[index].ComplianceHalfDamage and not player:HasCollectible(CollectibleType.COLLECTIBLE_WAFER) and not player:HasCollectible(CollectibleType.COLLECTIBLE_VIRGO) then
+					if mod.DataTable[index].ComplianceImmortalHeart <= 0 and mod.DataTable[index].ComplianceHalfDamage and not player:HasCollectible(CollectibleType.COLLECTIBLE_WAFER) and not player:HasCollectible(CollectibleType.COLLECTIBLE_CANCER) then
 						mod.DataTable[index].ComplianceHalfDamage = nil
 						player:GetEffects():RemoveCollectibleEffect(CollectibleType.COLLECTIBLE_WAFER)
-														 
-								  
-									 
-																												  
-															   
-												  
-													   
-		 
 					end
-				 
 				end
-			end
-	  
-											 
-		end
-	 
-											
+			end				 
+		end								
 	end
 end
 mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, mod.ImmortalBlock, EntityType.ENTITY_PLAYER)
@@ -294,38 +281,48 @@ mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.ActOfImmortal)
 
 function mod:HeartHandling(player)
 	if player.Parent ~= nil then return end
+	local forgottenCheck = player
+	local index = mod:GetEntityIndex(player)
 	if player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN then
+		if mod.DataTable[index].ComplianceHalfDamage == true and forgottenCheck:GetEffects():GetCollectibleEffectNum(CollectibleType.COLLECTIBLE_WAFER) > 0
+		and not player:HasCollectible(CollectibleType.COLLECTIBLE_WAFER) then
+			forgottenCheck:GetEffects():RemoveCollectibleEffect(CollectibleType.COLLECTIBLE_WAFER)
+			mod.DataTable[index].ComplianceHalfDamage = nil
+		end
 		player = player:GetSubPlayer()
 	end
-	local index = mod:GetEntityIndex(player)
 	if mod.DataTable[index].ComplianceImmortalHeart > 0 then
 		mod.DataTable[index].ComplianceImmortalHeart = mod.DataTable[index].ComplianceImmortalHeart > player:GetSoulHearts() and player:GetSoulHearts() or mod.DataTable[index].ComplianceImmortalHeart
 		local heartIndex = math.ceil(mod.DataTable[index].ComplianceImmortalHeart/2) - 1
-		for i=0, heartIndex do
-			local ExtraHearts = math.ceil(player:GetSoulHearts() / 2) + player:GetBoneHearts() - i
-			local imHeartLastIndex = player:GetSoulHearts() - (1 - player:GetSoulHearts() % 2)
-			if player:IsBoneHeart(ExtraHearts - 1) or not player:IsBlackHeart(imHeartLastIndex - i * 2) then
-				for j = imHeartLastIndex , (imHeartLastIndex - 2 - heartIndex * 2), -2 do
-					player:RemoveBlackHeart(j)
-				end
-				local complh = ComplianceImmortal.GetImmortalHearts(player)
-				ComplianceImmortal.AddImmortalHearts(player,-complh)
-				ComplianceImmortal.AddImmortalHearts(player,complh)
-				break
-			end
-		end
+		
 		if player:GetSoulHearts() % 2 ~= 0 then
-			if ComplianceImmortal.GetImmortalHearts(player) % 2 == 0 then
+			if mod.DataTable[index].ComplianceImmortalHeart % 2 == 0 then
 				player:AddSoulHearts(1)
 			end
 		end
 		if player:GetSoulHearts() % 2 == 0 then
-			if ComplianceImmortal.GetImmortalHearts(player) % 2 ~= 0 then
+			if mod.DataTable[index].ComplianceImmortalHeart % 2 ~= 0 then
 				mod.DataTable[index].ComplianceImmortalHeart = mod.DataTable[index].ComplianceImmortalHeart + 1
 			end
 		end
-		if mod.DataTable[index].ComplianceImmortalHeart > 0 and player:GetEffects():GetCollectibleEffectNum(CollectibleType.COLLECTIBLE_WAFER) < 1 then
-			player:GetEffects():AddCollectibleEffect(CollectibleType.COLLECTIBLE_WAFER)
+
+		for i=0, heartIndex do
+			local ExtraHearts = math.ceil(player:GetSoulHearts() / 2) + player:GetBoneHearts() - i
+			local imHeartLastIndex = player:GetSoulHearts() - (1 - player:GetSoulHearts() % 2)
+			if player:IsBoneHeart(ExtraHearts - 1) or not player:IsBlackHeart(imHeartLastIndex - i * 2) then
+				for j = imHeartLastIndex , (imHeartLastIndex - heartIndex * 2), -2 do
+					player:RemoveBlackHeart(j)
+				end
+				local complh = mod.DataTable[index].ComplianceImmortalHeart
+				player:AddSoulHearts(-complh)
+				player:AddBlackHearts(complh)
+				break
+			end
+		end
+
+		if mod.DataTable[index].ComplianceImmortalHeart > 0 and forgottenCheck:GetEffects():GetCollectibleEffectNum(CollectibleType.COLLECTIBLE_WAFER) < 1
+		and forgottenCheck:GetPlayerType() ~= PlayerType.PLAYER_THEFORGOTTEN then
+			forgottenCheck:GetEffects():AddCollectibleEffect(CollectibleType.COLLECTIBLE_WAFER)
 			mod.DataTable[index].ComplianceHalfDamage = true
 		end
 		if mod.DataTable[index].TookIHDamage then
