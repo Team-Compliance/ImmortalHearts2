@@ -61,8 +61,11 @@ function mod:ImmortalHeartCollision(entity, collider)
 			player = player:GetMainTwin()
 		end
 		local data = mod.DataTable[mod:GetEntityIndex(player)]
-		
-		if data.ComplianceImmortalHeart < (player:GetHeartLimit() - player:GetEffectiveMaxHearts()) then
+		local forgottenCheck = player
+		if player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN then
+			forgottenCheck = player:GetSubPlayer()
+		end
+		if data.ComplianceImmortalHeart < (forgottenCheck:GetHeartLimit() - forgottenCheck:GetEffectiveMaxHearts()) then
 			if entity.SubType == HeartSubType.HEART_IMMORTAL then
 				if player:GetPlayerType() ~= PlayerType.PLAYER_THELOST and player:GetPlayerType() ~= PlayerType.PLAYER_THELOST_B then
 					ComplianceImmortal.AddImmortalHearts(player, 2)
