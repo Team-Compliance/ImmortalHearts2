@@ -131,7 +131,7 @@ local function renderingHearts(player,playeroffset)
 			[5] = screenHelper.GetScreenBottomRight(0) + Vector((-hearts)*6+hpOffset-36,-27) + Options.HUDOffset * Vector(-20*0.8, -12*0.5)
 		}]]
 		local offset = playersHeartPos(playeroffset,hearts,hpOffset,isForgotten)--playersHeartPos[playeroffset]
-		local offsetCol = (playeroffset == 1 or playeroffset == 5) and 13 or 7
+		local offsetCol = (playeroffset == 1 or playeroffset == 5) and 12.1 or 6.1
 		offset.X = offset.X  - math.floor(hearts / offsetCol) * (playeroffset == 5 and (-72) or (playeroffset == 1 and 72 or 36))
 		offset.Y = offset.Y + math.floor(hearts / offsetCol) * 10
 		local anim = "ImmortalHeartFull"
