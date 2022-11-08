@@ -17,7 +17,7 @@ if EID then
 	EID:setModIndicatorIcon("ImmortalHeart")
 end
 
-function mod:GetEntityIndex(entity)
+function mod:GetEntityData(entity)
 	if entity then
 		if entity.Type == EntityType.ENTITY_PLAYER then
 			local player = entity:ToPlayer()
@@ -28,15 +28,9 @@ function mod:GetEntityIndex(entity)
 			if player:GetPlayerType() == PlayerType.PLAYER_LAZARUS2_B then
 				id = 2
 			end
-			local index = player:GetCollectibleRNG(id):GetSeed()
+			local index = tostring(player:GetCollectibleRNG(id):GetSeed())
 			if not mod.DataTable[index] then
 				mod.DataTable[index] = {}
-			end
-			if not mod.DataTable[index].ComplianceImmortalHeart then
-				mod.DataTable[index].ComplianceImmortalHeart = 0
-			end
-			if not mod.DataTable[index].PrevRoomIH then
-				mod.DataTable[index].PrevRoomIH = 0
 			end
 			if not mod.DataTable[index].lastEternalHearts or not mod.DataTable[index].lastMaxHearts then
 				mod.DataTable[index].lastEternalHearts = 0
@@ -45,23 +39,36 @@ function mod:GetEntityIndex(entity)
 			if player:GetPlayerType() == PlayerType.PLAYER_BETHANY and not mod.DataTable[index].ImmortalCharge then
 				mod.DataTable[index].ImmortalCharge = 0
 			end
-			return index
+			return mod.DataTable[index]
 		elseif entity.Type == EntityType.ENTITY_FAMILIAR then
 			local index = entity:ToFamiliar().InitSeed
 			if not mod.DataTable[index] then
 				mod.DataTable[index] = {}
 			end
-			return index
+			return mod.DataTable[index]
 		end
 	end
 	return nil
 end
 
-include("lua/ModConfigMenu.lua")
-include("lua/ImmortalHeart.lua")
-include("lua/ImmortalClot.lua")
-include("lua/ghg.lua")
---include("lua/achievement_display_api.lua")
+local function loadscripts(list)
+	for _,name in pairs(list) do
+		include("lua."..name)
+	end
+end
+
+local scriptList = {
+	"customhealthapi.core",
+	"ModConfigMenu",
+	"ImmortalHeart",
+	"ImmortalClot",
+}
+
+loadscripts(scriptList)
+
+--include("lua/ModConfigMenu.lua")
+--include("lua/ImmortalHeart.lua")
+--include("lua/ImmortalClot.lua")
 
 if MinimapAPI then
     local frame = 1
@@ -71,27 +78,10 @@ if MinimapAPI then
 	MinimapAPI:AddPickup(HeartSubType.HEART_IMMORTAL, "ImmortalIcon", EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_IMMORTAL, MinimapAPI.PickupNotCollected, "hearts", 13000)
 end
 
-function onStart(_, bool)
-	for i = 0, game:GetNumPlayers() - 1 do
-		local player = Isaac.GetPlayer(i)
-		local index = mod:GetEntityIndex(player)
-		if bool == false or mod.DataTable[index].ComplianceImmortalHeart == nil then
-			mod.DataTable[index].ComplianceImmortalHeart = 0
-		end
-	end
-end
-
---mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, onStart)
-
 function mod:OnSave(isSaving)
 	local save = {}
 	if isSaving then
-		save.PlayerData = {}
-		for key,value in pairs(mod.DataTable) do
-			if value ~= nil and key ~= nil then
-				save.PlayerData[tostring(key)] = value
-			end
-		end
+		save.PlayerData = mod.DataTable
 	end
 	save.SpriteStyle = mod.optionNum
 	save.AppearanceChance = mod.optionChance
@@ -106,11 +96,7 @@ function mod:OnLoad(isLoading)
 	if mod:HasData() then
 		local save = json.decode(mod:LoadData())
 		if isLoading then
-			for key,value in pairs(save.PlayerData) do
-				if key ~= nil then
-					mod.DataTable[tonumber(key)] = value
-				end
-			end
+			mod.DataTable = save.PlayerData				
 		end
 		mod.optionNum = save.SpriteStyle and save.SpriteStyle or 1
 		mod.optionChance = save.AppearanceChance and save.AppearanceChance or 20
@@ -127,20 +113,6 @@ function mod:OnLoad(isLoading)
 end
 
 mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, mod.OnLoad)
-
-function mod:PostUpdateAchiv()
-	local showAchievement
-	if not showAchievement then
-		showAchievement = mod:HasData() and json.decode(mod:LoadData()).showAchievement or false
-		if Isaac.GetPlayer().ControlsEnabled and showAchievement ~= true then
-			showAchievement = true
-			mod:OnSave(true)
-			CCO.AchievementDisplayAPI.PlayAchievement("gfx/ui/achievements/achievement_immortalheart.png")
-		end	
-	end
-end
-
---mod:AddCallback(ModCallbacks.MC_POST_UPDATE, mod.PostUpdateAchiv)
 
 -----------------------------------
 --Helper Functions (thanks piber)--
@@ -212,25 +184,6 @@ function mod:GetPlayerFromTear(tear)
 	return nil
 end
 
-function mod:GetSpawner(entity)
-	if entity and entity.GetData then
-		local spawnData = mod:GetSpawnData(entity)
-		if spawnData and spawnData.SpawnerEntity then
-			local spawner = mod:GetPtrHashEntity(spawnData.SpawnerEntity)
-			return spawner
-		end
-	end
-	return nil
-end
-
-function mod:GetSpawnData(entity)
-	if entity and entity.GetData then
-		local data = mod:GetData(entity)
-		return data.SpawnData
-	end
-	return nil
-end
-
 function mod:GetPtrHashEntity(entity)
 	if entity then
 		if entity.Entity then
@@ -257,50 +210,24 @@ function mod:GetData(entity)
 end
 
 function mod:DidPlayerCollectibleCountJustChange(player)
-	local index = mod:GetEntityIndex(player)
-	if mod.DataTable[index].didCollectibleCountJustChange then
+	local data = mod:GetEntityData(player)
+	if data.didCollectibleCountJustChange then
 		return true
 	end
 	return false
 end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, function(_, player)
-	local index = mod:GetEntityIndex(player)
+	local data = mod:GetEntityData(player)
 	local currentCollectibleCount = player:GetCollectibleCount()
-	if not mod.DataTable[index].lastCollectibleCount then
-		mod.DataTable[index].lastCollectibleCount = currentCollectibleCount
+	if not data.lastCollectibleCount then
+		data.lastCollectibleCount = currentCollectibleCount
 	end
-	mod.DataTable[index].didCollectibleCountJustChange = false
-	if mod.DataTable[index].lastCollectibleCount ~= currentCollectibleCount then
-		mod.DataTable[index].didCollectibleCountJustChange = true
+	data.didCollectibleCountJustChange = false
+	if data.lastCollectibleCount ~= currentCollectibleCount then
+		data.didCollectibleCountJustChange = true
 	end
-	mod.DataTable[index].lastCollectibleCount = currentCollectibleCount
+	data.lastCollectibleCount = currentCollectibleCount
 end)
-
---[[mod.entitySpawnData = {}
-mod:AddCallback(ModCallbacks.MC_PRE_ENTITY_SPAWN, function(_, type, variant, subType, position, velocity, spawner, seed)
-	mod.entitySpawnData[seed] = {
-		Type = type,
-		Variant = variant,
-		SubType = subType,
-		Position = position,
-		Velocity = velocity,
-		SpawnerEntity = spawner,
-		InitSeed = seed
-	}
-end)
-mod:AddCallback(ModCallbacks.MC_POST_TEAR_INIT, function(_, entity)
-	local seed = entity.InitSeed
-	local data = mod:GetData(entity)
-	data.SpawnData = mod.entitySpawnData[seed]
-end)
-mod:AddCallback(ModCallbacks.MC_POST_ENTITY_REMOVE, function(_, entity)
-	local data = mod:GetData(entity)
-	data.SpawnData = nil
-end)
-mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function()
-	mod.entitySpawnData = {}
-end)]]
-
 function mod:Contains(list, x)
 	for _, v in pairs(list) do
 		if v == x then return true end
@@ -350,75 +277,4 @@ function ripairs_it(t,i)
 end
 function ripairs(t)
 	return ripairs_it, t, #t+1
-end
-
---delayed functions
-DelayedFunctions = {}
-
-function mod:DelayFunction(func, delay, args, removeOnNewRoom, useRender)
-	local delayFunctionData = {
-		Function = func,
-		Delay = delay,
-		Args = args,
-		RemoveOnNewRoom = removeOnNewRoom,
-		OnRender = useRender
-	}
-	table.insert(DelayedFunctions, delayFunctionData)
-end
-
-mod:AddCallback(ModCallbacks.MC_POST_NEW_ROOM, function()
-	for i, delayFunctionData in ripairs(DelayedFunctions) do
-		if delayFunctionData.RemoveOnNewRoom then
-			table.remove(DelayedFunctions, i)
-		end
-	end
-end)
-
-local function delayFunctionHandling(onRender)
-	if #DelayedFunctions ~= 0 then
-		for i, delayFunctionData in ripairs(DelayedFunctions) do
-			if (delayFunctionData.OnRender and onRender) or (not delayFunctionData.OnRender and not onRender) then
-				if delayFunctionData.Delay <= 0 then
-					if delayFunctionData.Function then
-						if delayFunctionData.Args then
-							delayFunctionData.Function(table.unpack(delayFunctionData.Args))
-						else
-							delayFunctionData.Function()
-						end
-					end
-					table.remove(DelayedFunctions, i)
-				else
-					delayFunctionData.Delay = delayFunctionData.Delay - 1
-				end
-			end
-		end
-	end
-end
-
-mod:AddCallback(ModCallbacks.MC_POST_UPDATE, function()
-	delayFunctionHandling(false)
-end)
-
-mod:AddCallback(ModCallbacks.MC_POST_RENDER, function()
-	delayFunctionHandling(true)
-end)
-
-mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, function()
-	DelayedFunctions = {}
-end)
-
-function mod:EsauCheck(player)
-	if not player or (player and not player.GetData) then
-		return nil
-	end
-	local currentPlayer = 1
-	for i=1, Game():GetNumPlayers() do
-		local otherPlayer = Isaac.GetPlayer(i-1)
-		local searchPlayer = i
-		--added GetPlayerType() to get Jacob and Easu seperatly
-		if otherPlayer.ControllerIndex == player.ControllerIndex and otherPlayer:GetPlayerType() == player:GetPlayerType() then
-			currentPlayer = searchPlayer
-		end
-	end
-	return currentPlayer
 end

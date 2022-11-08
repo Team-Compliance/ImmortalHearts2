@@ -50,7 +50,6 @@ end
 mod:AddCallback(ModCallbacks.MC_FAMILIAR_UPDATE, mod.StaticHP, 238)
 
 function mod:UseSumptorium(boi, rng, player, slot, data)
-	local index = mod:GetEntityIndex(player)
 	if player:GetPlayerType() == PlayerType.PLAYER_EVE_B then
 		local amount = 0
 		for _, entity in pairs(Isaac.FindByType(3, 238, 20)) do
@@ -58,15 +57,14 @@ function mod:UseSumptorium(boi, rng, player, slot, data)
 			entity:Kill()
 		end
 		if amount > 0 then
-			player:AddSoulHearts(amount)
-			mod.DataTable[index].ComplianceImmortalHeart = mod.DataTable[index].ComplianceImmortalHeart + amount
+			ComplianceImmortal.AddImmortalHearts(player,amount)
 		end
 	end
 end
 mod:AddCallback(ModCallbacks.MC_USE_ITEM, mod.UseSumptorium, CollectibleType.COLLECTIBLE_SUMPTORIUM)
 
 function mod:UseSumptoriumNoTEve(boi, rng, player, useFlags, slot, data)
-	local index = mod:GetEntityIndex(player)
+	local index = mod:GetEntityData(player)
 	if mod.DataTable[index].ComplianceImmortalHeart > 0 and player:GetHearts() == 0 and player:GetPlayerType() ~= PlayerType.PLAYER_EVE_B then
 		if mod.DataTable[index].ComplianceImmortalHeart % 2 ~= 0 then
 			SFXManager():Play(Isaac.GetSoundIdByName("ImmortalHeartBreak"),1,0)
@@ -103,7 +101,7 @@ function mod:UseSumptoriumNoTEve(boi, rng, player, useFlags, slot, data)
 	end
 	return nil
 end
-mod:AddCallback(ModCallbacks.MC_PRE_USE_ITEM, mod.UseSumptoriumNoTEve, CollectibleType.COLLECTIBLE_SUMPTORIUM)
+--mod:AddCallback(ModCallbacks.MC_PRE_USE_ITEM, mod.UseSumptoriumNoTEve, CollectibleType.COLLECTIBLE_SUMPTORIUM)
 
 
 --SPAWNING
@@ -142,7 +140,7 @@ function mod:TEveSpawn(baby)
 		baby:Remove()
 	end
 end
-mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, mod.TEveSpawn, 238)
+--mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, mod.TEveSpawn, 238)
 
 
 function mod:ImmortalClotDamage(clot,_,_,_,dmgcooldown)
