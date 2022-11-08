@@ -5,7 +5,7 @@ local json = require("json")
 
 HeartSubType.HEART_IMMORTAL = 902
 
-mod.DataTable = {}
+mod.savedata = {DataTable = {},CustomHealthAPISave = nil}
 mod.ImmortalSplash = Sprite()
 mod.ImmortalSplash:Load("gfx/ui/ui_remix_hearts.anm2",true)
 
@@ -29,23 +29,23 @@ function mod:GetEntityData(entity)
 				id = 2
 			end
 			local index = tostring(player:GetCollectibleRNG(id):GetSeed())
-			if not mod.DataTable[index] then
-				mod.DataTable[index] = {}
+			if not mod.savedata.DataTable[index] then
+				mod.savedata.DataTable[index] = {}
 			end
-			if not mod.DataTable[index].lastEternalHearts or not mod.DataTable[index].lastMaxHearts then
-				mod.DataTable[index].lastEternalHearts = 0
-				mod.DataTable[index].lastMaxHearts = 0
+			if not mod.savedata.DataTable[index].lastEternalHearts or not mod.savedata.DataTable[index].lastMaxHearts then
+				mod.savedata.DataTable[index].lastEternalHearts = 0
+				mod.savedata.DataTable[index].lastMaxHearts = 0
 			end
-			if player:GetPlayerType() == PlayerType.PLAYER_BETHANY and not mod.DataTable[index].ImmortalCharge then
-				mod.DataTable[index].ImmortalCharge = 0
+			if player:GetPlayerType() == PlayerType.PLAYER_BETHANY and not mod.savedata.DataTable[index].ImmortalCharge then
+				mod.savedata.DataTable[index].ImmortalCharge = 0
 			end
-			return mod.DataTable[index]
+			return mod.savedata.DataTable[index]
 		elseif entity.Type == EntityType.ENTITY_FAMILIAR then
 			local index = entity:ToFamiliar().InitSeed
-			if not mod.DataTable[index] then
-				mod.DataTable[index] = {}
+			if not mod.savedata.DataTable[index] then
+				mod.savedata.DataTable[index] = {}
 			end
-			return mod.DataTable[index]
+			return mod.savedata.DataTable[index]
 		end
 	end
 	return nil
@@ -81,7 +81,7 @@ end
 function mod:OnSave(isSaving)
 	local save = {}
 	if isSaving then
-		save.PlayerData = mod.DataTable
+		save.PlayerData = mod.savedata.DataTable
 	end
 	save.SpriteStyle = mod.optionNum
 	save.AppearanceChance = mod.optionChance
@@ -92,22 +92,28 @@ end
 mod:AddCallback(ModCallbacks.MC_PRE_GAME_EXIT, mod.OnSave)
 
 function mod:OnLoad(isLoading)
-	mod.DataTable = {}
+	
 	if mod:HasData() then
 		local save = json.decode(mod:LoadData())
 		if isLoading then
-			mod.DataTable = save.PlayerData				
+			mod.savedata.DataTable = save.PlayerData
+		else
+			mod.savedata.DataTable = {}
+			mod.savedata.CustomHealthAPISave = nil
 		end
 		mod.optionNum = save.SpriteStyle and save.SpriteStyle or 1
 		mod.optionChance = save.AppearanceChance and save.AppearanceChance or 20
 		mod.optionContrition = save.ActOfContritionChance and save.ActOfContritionChance or 1
-		
-		if EID then
-			if mod.optionContrition == 1 then -- Has to be here because of save data
-				EID:addCollectible(601, "↑ {{Tears}} +0.7 Tears up#{{ImmortalHeart}} +1 Immortal Heart#{{AngelChance}} Allows Angel Rooms to spawn even if you've taken a Devil deal#Taking Red Heart damage doesn't reduce Devil/Angel Room chance as much", "Act of Contrition", "en_us")
-				EID:addCollectible(601, "↑ {{Tears}} Lágrimas +0.7#{{ImmortalHeart}} +1 corazón inmortal#{{AngelChance}} Permite que aparezcan salas del ángel aunque hayas hecho pactos con el diablo antes", "Acto de contrición", "spa")
-				EID:addCollectible(601, "↑ {{Tears}} +0.7 к скорострельности#{{ImmortalHeart}} +1 бессмертное сердце#{{AngelChance}} Позволяет Ангельским комнатам появляться даже в том случае, если ранее была заключена сделка с Дьяволом#Получение урона красными сердцами не так сильно снижает шанс сделки", "Покаяние", "ru")
-			end
+	else
+		mod.optionNum = 1
+		mod.optionChance = 20
+		mod.optionContrition = 1
+	end
+	if EID then
+		if mod.optionContrition == 1 then -- Has to be here because of save data
+			EID:addCollectible(601, "↑ {{Tears}} +0.7 Tears up#{{ImmortalHeart}} +1 Immortal Heart#{{AngelChance}} Allows Angel Rooms to spawn even if you've taken a Devil deal#Taking Red Heart damage doesn't reduce Devil/Angel Room chance as much", "Act of Contrition", "en_us")
+			EID:addCollectible(601, "↑ {{Tears}} Lágrimas +0.7#{{ImmortalHeart}} +1 corazón inmortal#{{AngelChance}} Permite que aparezcan salas del ángel aunque hayas hecho pactos con el diablo antes", "Acto de contrición", "spa")
+			EID:addCollectible(601, "↑ {{Tears}} +0.7 к скорострельности#{{ImmortalHeart}} +1 бессмертное сердце#{{AngelChance}} Позволяет Ангельским комнатам появляться даже в том случае, если ранее была заключена сделка с Дьяволом#Получение урона красными сердцами не так сильно снижает шанс сделки", "Покаяние", "ru")
 		end
 	end
 end

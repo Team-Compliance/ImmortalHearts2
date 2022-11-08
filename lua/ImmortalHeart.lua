@@ -6,6 +6,10 @@ local immortalSfx = Isaac.GetSoundIdByName("immortal")
 local screenHelper = require("lua.screenhelper")
 -- API functions --
 
+if CustomHealthAPI and CustomHealthAPI.Library and CustomHealthAPI.Library.UnregisterCallbacks then
+    CustomHealthAPI.Library.UnregisterCallbacks("ComplianceImmortalHeart")
+end
+
 CustomHealthAPI.Library.RegisterSoulHealth(
     "HEART_IMMORTAL",
     {
@@ -13,9 +17,9 @@ CustomHealthAPI.Library.RegisterSoulHealth(
         AnimationName = {"ImmortalHeartHalf", "ImmortalHeartFull"},
         SortOrder = 150,
         AddPriority = 175,
-        HealFlashRO = 245/255, 
+        HealFlashRO = 240/255, 
         HealFlashGO = 240/255,
-        HealFlashBO = 66/255,
+        HealFlashBO = 240/255,
         MaxHP = 2,
         PrioritizeHealing = true,
         PickupEntities = {
@@ -35,6 +39,14 @@ CustomHealthAPI.Library.RegisterSoulHealth(
     }
 )
 
+CustomHealthAPI.Library.AddCallback("ComplianceImmortalHeart",CustomHealthAPI.Enums.Callbacks.ON_SAVE,0,function (savedata,isPreGameExit)
+    mod.savedata.CustomHealthAPISave = savedata
+end)
+
+CustomHealthAPI.Library.AddCallback("ComplianceImmortalHeart", CustomHealthAPI.Enums.Callbacks.ON_LOAD, 0, function()
+	return mod.savedata.CustomHealthAPISave
+end)
+
 CustomHealthAPI.Library.AddCallback("ComplianceImmortalHeart", CustomHealthAPI.Enums.Callbacks.PRE_HEALTH_DAMAGED, 0, function(player, flags, key, hpDamaged, otherKey, otherHPDamaged, amountToRemove)
 	if otherKey == "HEART_IMMORTAL" then
 		return 1
@@ -42,7 +54,6 @@ CustomHealthAPI.Library.AddCallback("ComplianceImmortalHeart", CustomHealthAPI.E
 end)
 
 CustomHealthAPI.Library.AddCallback("ComplianceImmortalHeart", CustomHealthAPI.Enums.Callbacks.POST_HEALTH_DAMAGED, 0, function(player, flags, key, hpDamaged, wasDepleted, wasLastDamaged)
-	print(key)
 	if key == "HEART_IMMORTAL" then
 		if wasDepleted then
 			sfx:Play(immortalBreakSfx,1,0)

@@ -1,5 +1,7 @@
 local mod = ComplianceImmortal
 local game = Game()
+local sfx = SFXManager()
+local immortalSfx = Isaac.GetSoundIdByName("immortal")
 
 function mod:ClotHeal()
 	for _, entity in pairs(Isaac.FindByType(3, 238, 20)) do
@@ -8,14 +10,17 @@ function mod:ClotHeal()
 			local healed = 0
 			for _, entity2 in pairs(Isaac.FindByType(3, 238)) do
 				entity2 = entity2:ToFamiliar()
-				if entity2.SubType ~= 20 and not entity2:GetData().Healed 
+				if not entity2:GetData().Healed 
 				and GetPtrHash(entity2.Player) == GetPtrHash(entity.Player) 
 				and entity2.HitPoints < entity2.MaxHitPoints then
+					if entity2.SubType == 0 then
+						entity2.HitPoints = entity2.MaxHitPoints
+					elseif entity2.SubType ~= 20 then
+						entity2.HitPoints = entity2.HitPoints + 2
+					end
 					local ImmortalEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, 903, 0, entity2.Position + Vector(0, 1), Vector.Zero, nil):ToEffect()
 					ImmortalEffect:GetSprite().Offset = Vector(0, -10)
-					entity2:AddHealth(2)
 					entity2:GetData().Healed = true
-					healed = healed + 1
 				end
 			end
 			if entity:GetData().TC_HP < entity.MaxHitPoints then
@@ -26,6 +31,10 @@ function mod:ClotHeal()
 		end
 		local ImmortalEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, 903, 0, entity.Position + Vector(0, 1), Vector.Zero, nil):ToEffect()
 		ImmortalEffect:GetSprite().Offset = Vector(0, -10)
+		ImmortalEffect:GetSprite().Offset = Vector(0, -10)
+	end
+	if not sfx:IsPlaying(immortalSfx) then
+		sfx:Play(immortalSfx,1,0)
 	end
 	for _, entity in pairs(Isaac.FindByType(3, 238)) do
 		entity = entity:ToFamiliar()
@@ -38,115 +47,48 @@ mod:AddCallback(ModCallbacks.MC_PRE_SPAWN_CLEAN_AWARD, mod.ClotHeal)
 
 function mod:StaticHP(clot)
 	if clot.SubType == 20 then
-		local data = clot:GetData()
-		if not data.TC_HP then
-			data.TC_HP = clot.HitPoints
+		local clotData = clot:GetData()
+		if (clotData.TC_HP == nil) then
+			clotData.TC_HP = clot.HitPoints
 		else
-			data.TC_HP = data.TC_HP <= clot.MaxHitPoints and data.TC_HP or clot.MaxHitPoints
-			clot.HitPoints = data.TC_HP
-		end
-	end
-end
-mod:AddCallback(ModCallbacks.MC_FAMILIAR_UPDATE, mod.StaticHP, 238)
-
-function mod:UseSumptorium(boi, rng, player, slot, data)
-	if player:GetPlayerType() == PlayerType.PLAYER_EVE_B then
-		local amount = 0
-		for _, entity in pairs(Isaac.FindByType(3, 238, 20)) do
-			amount = amount + 1
-			entity:Kill()
-		end
-		if amount > 0 then
-			ComplianceImmortal.AddImmortalHearts(player,amount)
-		end
-	end
-end
-mod:AddCallback(ModCallbacks.MC_USE_ITEM, mod.UseSumptorium, CollectibleType.COLLECTIBLE_SUMPTORIUM)
-
-function mod:UseSumptoriumNoTEve(boi, rng, player, useFlags, slot, data)
-	local index = mod:GetEntityData(player)
-	if mod.DataTable[index].ComplianceImmortalHeart > 0 and player:GetHearts() == 0 and player:GetPlayerType() ~= PlayerType.PLAYER_EVE_B then
-		if mod.DataTable[index].ComplianceImmortalHeart % 2 ~= 0 then
-			SFXManager():Play(Isaac.GetSoundIdByName("ImmortalHeartBreak"),1,0)
-			local shatterSPR = Isaac.Spawn(EntityType.ENTITY_EFFECT, 904, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect():GetSprite()
-			shatterSPR.PlaybackSpeed = 2
-			local NumSoulHearts = player:GetSoulHearts() - (1 - player:GetSoulHearts() % 2) - mod.DataTable[index].ComplianceImmortalHeart - 1
-			player:RemoveBlackHeart(NumSoulHearts)
-		else
-			SFXManager():Play(SoundEffect.SOUND_MEAT_JUMPS,1,0)
-		end
-		local clot
-		for _, s_clot in ipairs(Isaac.FindByType(3,238,20)) do
-			s_clot = s_clot:ToFamiliar()
-			if GetPtrHash(s_clot.Player) == GetPtrHash(player) then
-				clot = s_clot
-				break
+			local damageTaken = clotData.TC_HP - clot.HitPoints
+			if (damageTaken > 0.19 and damageTaken < 0.21) then
+				clot.HitPoints = clot.HitPoints + damageTaken
+			elseif (damageTaken > 1.19 and damageTaken < 1.21) then
+				clot.HitPoints = clot.HitPoints - 1.0
+			else
+				clotData.TC_HP = clot.HitPoints
 			end
 		end
-		if clot == nil then
-			clot = Isaac.Spawn(3, 238, 20, player.Position, Vector(0, 0), player):ToFamiliar()
-			local clotData = clot:GetData()
-			clotData.TC_HP = 3
-			clot.HitPoints = clotData.TC_HP
-		else
-			local clotData = clot:GetData()
-			clotData.TC_HP = clotData.TC_HP + 1
-			local ImmortalEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, 903, 0, clot.Position + Vector(0, 1), Vector.Zero, nil):ToEffect()
-			ImmortalEffect:GetSprite().Offset = Vector(0, -10)
-		end
-		player:AddSoulHearts(-1)
-		mod.DataTable[index].ComplianceImmortalHeart = mod.DataTable[index].ComplianceImmortalHeart - 1
-		player:AnimateCollectible(CollectibleType.COLLECTIBLE_SUMPTORIUM, "UseItem")
-		return true
 	end
-	return nil
 end
---mod:AddCallback(ModCallbacks.MC_PRE_USE_ITEM, mod.UseSumptoriumNoTEve, CollectibleType.COLLECTIBLE_SUMPTORIUM)
-
+mod:AddCallback(ModCallbacks.MC_POST_FAMILIAR_RENDER, mod.StaticHP, 238)
 
 --SPAWNING
 --t eve's ability
-function mod:TEveSpawn(baby)
+function mod:ImmortalClotSpawn(baby)
 	local player = baby.Player
-	local index = mod:GetEntityIndex(player)
-	if (player:GetPlayerType() == PlayerType.PLAYER_EVE_B) and (mod.DataTable[index].ComplianceImmortalHeart > 0) and (baby.SubType == 2) then
-		if mod.DataTable[index].ComplianceImmortalHeart % 2 ~= 0 then
+	if baby.SubType == 20 then
+		if ComplianceImmortal.GetImmortalHearts(player) % 2 == 0 then
 			SFXManager():Play(Isaac.GetSoundIdByName("ImmortalHeartBreak"),1,0)
 			local shatterSPR = Isaac.Spawn(EntityType.ENTITY_EFFECT, 904, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect():GetSprite()
 			shatterSPR.PlaybackSpeed = 2
-			local NumSoulHearts = player:GetSoulHearts() - (1 - player:GetSoulHearts() % 2) - mod.DataTable[index].ComplianceImmortalHeart - 1
-			player:RemoveBlackHeart(NumSoulHearts)
 		end
 		local clot
 		for _, s_clot in ipairs(Isaac.FindByType(3,238,20)) do
 			s_clot = s_clot:ToFamiliar()
-			if GetPtrHash(s_clot.Player) == GetPtrHash(player) then
+			if GetPtrHash(s_clot.Player) == GetPtrHash(player) and GetPtrHash(baby) ~= GetPtrHash(s_clot) then
 				clot = s_clot
 				break
 			end
 		end
-		if clot == nil then
-			clot = Isaac.Spawn(3, 238, 20, player.Position, Vector(0, 0), player):ToFamiliar()
-			local clotData = clot:GetData()
-			clotData.TC_HP = 3
-			clot.HitPoints = clotData.TC_HP
-		else
+		if clot ~= nil then
 			local clotData = clot:GetData()
 			clotData.TC_HP = clotData.TC_HP + 1
 			local ImmortalEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, 903, 0, clot.Position + Vector(0, 1), Vector.Zero, nil):ToEffect()
 			ImmortalEffect:GetSprite().Offset = Vector(0, -10)
+			baby:Remove()
 		end
-		mod.DataTable[index].ComplianceImmortalHeart = mod.DataTable[index].ComplianceImmortalHeart - 1
-		baby:Remove()
 	end
 end
---mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, mod.TEveSpawn, 238)
-
-
-function mod:ImmortalClotDamage(clot,_,_,_,dmgcooldown)
-	if clot.Variant == 238 and clot.SubType == 20 then
-		clot.HitPoints = clot:GetData().TC_HP
-		clot:GetData().TC_HP = clot:GetData().TC_HP - 1
-	end
-end
-mod:AddCallback(ModCallbacks.MC_ENTITY_TAKE_DMG, mod.ImmortalClotDamage, EntityType.ENTITY_FAMILIAR)
+mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, mod.ImmortalClotSpawn, 238)
