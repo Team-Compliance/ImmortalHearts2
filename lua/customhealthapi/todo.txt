@@ -1,0 +1,52 @@
+--more callbacks
+--more library functions
+--better library functions
+--candy heart/soul locket hooks
+
+--removals by key/basegame format instead of hp
+--generic removals
+--fix the forgotten subplayer stored in esau jr losing red/soul hp after saving/reloading (basegame bug, not chapi bug)
+--split/collapse forgotten subplayer info on playertype change (including esau jr.)
+--other on-character change funnies
+--clicker
+--rune shard
+--experimental pill
+--half black heart for reverse fool
+--the scapular + heartbreak + spirit shackles bullshittery
+--investigate uses of heartlimit for whether or not they should be replaced with trueheartlimit
+--mother's kiss
+--greed's gullet
+--better handling for golden hearts on removals
+--better handling for whore of babylon / blood babylon
+--echo chamber handling for horse pills
+--better handling for reverse sun ending
+
+--better conversion library function
+--debug 3 support
+--dynamic support for health reskin mods
+--proper keeper / non-standard heart support
+--proper broken-style heart support
+--proper lost support
+	--the lost + alabaster box + soul type hearts that aren't soul hearts
+	--the lost + gaining soul hp
+--half-capacity containers
+--integrated fiend mix minion support (maybe)
+--oddly sized hearts
+--custom health limits
+--custom overlays
+--defining character health types
+--setting to give lost visible health
+--more fleshed out container hp + healing
+--ability to define what keys of soul/red health give bethany/Bethany charges
+--more in-depth hp type limitation support
+--ab+ port
+--sumptorium clot onfire callbacks
+
+--the following are basegame behaviours/bugs i will not be replicating
+	--devil deal chance should not be lost if the player has any devil deal protecting red hp after taking damage
+	--overflowed red damage counts as devil deal affecting damage
+	--forced red heart damage will trigger bone heart protection if the last bone heart is filled
+	--eternal hearts don't render on rotten bone hearts
+	--gold hearts trigger whenever a heart is destroyed, not necessarily the heart that is golden
+	--negative rotten hp
+	--curse of the unknown renders in the slot 0 position of the hidden amount of hp of soulstone characters
