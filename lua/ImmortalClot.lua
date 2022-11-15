@@ -21,6 +21,9 @@ function mod:ClotHeal()
 					local ImmortalEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, 903, 0, entity2.Position + Vector(0, 1), Vector.Zero, nil):ToEffect()
 					ImmortalEffect:GetSprite().Offset = Vector(0, -10)
 					entity2:GetData().Healed = true
+					if not sfx:IsPlaying(immortalSfx) then
+						sfx:Play(immortalSfx,1,0)
+					end
 				end
 			end
 			if entity:GetData().TC_HP < entity.MaxHitPoints then
@@ -32,10 +35,9 @@ function mod:ClotHeal()
 		local ImmortalEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, 903, 0, entity.Position + Vector(0, 1), Vector.Zero, nil):ToEffect()
 		ImmortalEffect:GetSprite().Offset = Vector(0, -10)
 		ImmortalEffect:GetSprite().Offset = Vector(0, -10)
+		
 	end
-	if not sfx:IsPlaying(immortalSfx) then
-		sfx:Play(immortalSfx,1,0)
-	end
+
 	for _, entity in pairs(Isaac.FindByType(3, 238)) do
 		entity = entity:ToFamiliar()
 		if entity:GetData().Healed then

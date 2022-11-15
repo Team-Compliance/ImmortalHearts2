@@ -36,9 +36,6 @@ function mod:GetEntityData(entity)
 				mod.savedata.DataTable[index].lastEternalHearts = 0
 				mod.savedata.DataTable[index].lastMaxHearts = 0
 			end
-			if player:GetPlayerType() == PlayerType.PLAYER_BETHANY and not mod.savedata.DataTable[index].ImmortalCharge then
-				mod.savedata.DataTable[index].ImmortalCharge = 0
-			end
 			return mod.savedata.DataTable[index]
 		elseif entity.Type == EntityType.ENTITY_FAMILIAR then
 			local index = entity:ToFamiliar().InitSeed
@@ -85,7 +82,7 @@ function mod:OnSave(isSaving)
 	end
 	save.SpriteStyle = mod.optionNum
 	save.AppearanceChance = mod.optionChance
-	save.ActOfContritionChance = mod.optionContrition
+	save.ActOfContrition = mod.optionContrition
 	save.showAchievement = true
 	mod:SaveData(json.encode(save))
 end
@@ -102,11 +99,11 @@ function mod:OnLoad(isLoading)
 			mod.savedata.CustomHealthAPISave = nil
 		end
 		mod.optionNum = save.SpriteStyle and save.SpriteStyle or 1
-		mod.optionChance = save.AppearanceChance and save.AppearanceChance or 20
-		mod.optionContrition = save.ActOfContritionChance and save.ActOfContritionChance or 1
+		mod.optionChance = save.AppearanceChance and save.AppearanceChance or 50
+		mod.optionContrition = save.ActOfContrition and save.ActOfContrition or 1
 	else
 		mod.optionNum = 1
-		mod.optionChance = 20
+		mod.optionChance = 50
 		mod.optionContrition = 1
 	end
 	if EID then
@@ -119,168 +116,3 @@ function mod:OnLoad(isLoading)
 end
 
 mod:AddCallback(ModCallbacks.MC_POST_GAME_STARTED, mod.OnLoad)
-
------------------------------------
---Helper Functions (thanks piber)--
------------------------------------
-
-function mod:GetPlayers(functionCheck, ...)
-
-	local args = {...}
-	local players = {}
-	
-	local game = Game()
-	
-	for i=1, game:GetNumPlayers() do
-	
-		local player = Isaac.GetPlayer(i-1)
-		
-		local argsPassed = true
-		
-		if type(functionCheck) == "function" then
-		
-			for j=1, #args do
-			
-				if args[j] == "player" then
-					args[j] = player
-				elseif args[j] == "currentPlayer" then
-					args[j] = i
-				end
-				
-			end
-			
-			if not functionCheck(table.unpack(args)) then
-			
-				argsPassed = false
-				
-			end
-			
-		end
-		
-		if argsPassed then
-			players[#players+1] = player
-		end
-		
-	end
-	
-	return players
-	
-end
-
-function mod:GetPlayerFromTear(tear)
-	for i=1, 3 do
-		local check = nil
-		if i == 1 then
-			check = tear.Parent
-		elseif i == 2 then
-			check = mod:GetSpawner(tear)
-		elseif i == 3 then
-			check = tear.SpawnerEntity
-		end
-		if check then
-			if check.Type == EntityType.ENTITY_PLAYER then
-				return mod:GetPtrHashEntity(check):ToPlayer()
-			elseif check.Type == EntityType.ENTITY_FAMILIAR and check.Variant == FamiliarVariant.INCUBUS then
-				local data = mod:GetData(tear)
-				data.IsIncubusTear = true
-				return check:ToFamiliar().Player:ToPlayer()
-			end
-		end
-	end
-	return nil
-end
-
-function mod:GetPtrHashEntity(entity)
-	if entity then
-		if entity.Entity then
-			entity = entity.Entity
-		end
-		for _, matchEntity in pairs(Isaac.FindByType(entity.Type, entity.Variant, entity.SubType, false, false)) do
-			if GetPtrHash(entity) == GetPtrHash(matchEntity) then
-				return matchEntity
-			end
-		end
-	end
-	return nil
-end
-
-function mod:GetData(entity)
-	if entity and entity.GetData then	
-		local data = entity:GetData()
-		if not data.ImmortalHeart then
-			data.ImmortalHeart = {}
-		end
-		return data.ImmortalHeart
-	end
-	return nil
-end
-
-function mod:DidPlayerCollectibleCountJustChange(player)
-	local data = mod:GetEntityData(player)
-	if data.didCollectibleCountJustChange then
-		return true
-	end
-	return false
-end
-mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, function(_, player)
-	local data = mod:GetEntityData(player)
-	local currentCollectibleCount = player:GetCollectibleCount()
-	if not data.lastCollectibleCount then
-		data.lastCollectibleCount = currentCollectibleCount
-	end
-	data.didCollectibleCountJustChange = false
-	if data.lastCollectibleCount ~= currentCollectibleCount then
-		data.didCollectibleCountJustChange = true
-	end
-	data.lastCollectibleCount = currentCollectibleCount
-end)
-function mod:Contains(list, x)
-	for _, v in pairs(list) do
-		if v == x then return true end
-	end
-	return false
-end
-
-function mod:GetRandomNumber(numMin, numMax, rng)
-	if not numMax then
-		numMax = numMin
-		numMin = nil
-	end
-	
-	rng = rng or RNG()
-
-	if type(rng) == "number" then
-		local seed = rng
-		rng = RNG()
-		rng:SetSeed(seed, 1)
-	end
-	
-	if numMin and numMax then
-		return rng:Next() % (numMax - numMin + 1) + numMin
-	elseif numMax then
-		return rng:Next() % numMin
-	end
-	return rng:Next()
-end
-
-OnRenderCounter = 0
-IsEvenRender = true
-mod:AddCallback(ModCallbacks.MC_POST_RENDER, function()
-	OnRenderCounter = OnRenderCounter + 1
-	
-	IsEvenRender = false
-	if Isaac.GetFrameCount()%2 == 0 then
-		IsEvenRender = true
-	end
-end)
-
---ripairs stuff from revel
-function ripairs_it(t,i)
-	i=i-1
-	local v=t[i]
-	if v==nil then return v end
-	return i,v
-end
-function ripairs(t)
-	return ripairs_it, t, #t+1
-end
