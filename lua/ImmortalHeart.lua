@@ -160,16 +160,16 @@ function mod:ImmortalHeal()
 end
 mod:AddCallback(ModCallbacks.MC_PRE_SPAWN_CLEAN_AWARD, mod.ImmortalHeal)
 
-function mod:PreEternalSpawn(heart)
-	local rng = RNG()
-	if heart.SubType == HeartSubType.HEART_ETERNAL and heart:GetSprite():IsPlaying("Appear") then
-		rng:SetSeed(heart.InitSeed, 35)
-		if rng:RandomFloat() >= (1 - mod.optionChance / 100) then
-			heart:Morph(heart.Type,heart.Variant,HeartSubType.HEART_IMMORTAL,true,true)
+local grng = RNG()
+function mod:PreEternalSpawn(id, var, subtype, pos, vel, spawner, seed)
+	if id == EntityType.ENTITY_PICKUP and var == PickupVariant.PICKUP_HEART and subtype == HeartSubType.HEART_ETERNAL then
+		grng:SetSeed(seed, 0)
+		if grng:RandomFloat() >= (1 - mod.optionChance / 100) then
+			return {id, var, HeartSubType.HEART_ETERNAL, seed }
 		end
 	end
 end
-mod:AddCallback(ModCallbacks.MC_POST_PICKUP_INIT, mod.PreEternalSpawn, PickupVariant.PICKUP_HEART)
+mod:AddCallback(ModCallbacks.MC_PRE_ENTITY_SPAWN, mod.PreEternalSpawn)
 
 function mod:SpriteChange(entity)
 	if entity.SubType == HeartSubType.HEART_IMMORTAL then
