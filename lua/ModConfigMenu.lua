@@ -37,36 +37,35 @@ if ModConfigMenu then
         end,
         OnChange = function(currentNum)
             mod.optionNum = currentNum
-            local spritename = "gfx/ui/ui_remix_hearts"
+            local animfile = "gfx/ui/ui_remix_hearts"
             if mod.optionNum == 2 then
-                spritename = spritename.."_aladar"
+                animfile = animfile.."_aladar"
             end
             if mod.optionNum == 3 then
-                spritename = spritename.."_peas"
+                animfile = animfile.."_peas"
             end
             if mod.optionNum == 4 then
-                spritename = spritename.."_beautiful"
+                animfile = animfile.."_beautiful"
             end
             if mod.optionNum == 5 then 
-                spritename = spritename.."_goncholito"
+                animfile = animfile.."_goncholito"
             end
             if mod.optionNum == 6 then
-                spritename = spritename.."_flashy"
+                animfile = animfile.."_flashy"
             end
             if mod.optionNum == 7 then
-                spritename = spritename.."_bettericons"
+                animfile = animfile.."_bettericons"
             end
             if mod.optionNum == 8 then
-                spritename = spritename.."_eternalupdate"
+                animfile = animfile.."_eternalupdate"
             end
             if mod.optionNum == 9 then
-                spritename = spritename.."_duxi"
+                animfile = animfile.."_duxi"
             end
-            spritename = spritename..".png"
-            for j = 0,4 do
-                mod.ImmortalSplash:ReplaceSpritesheet(j,spritename)
+            
+            if CustomHealthAPI.PersistentData.HealthDefinitions["HEART_IMMORTAL"] then
+                CustomHealthAPI.PersistentData.HealthDefinitions["HEART_IMMORTAL"].AnimationFilename = animfile..".anm2"
             end
-            mod.ImmortalSplash:LoadGraphics()
         end,
         Info = "Change appearance of immortal hearts."
     })

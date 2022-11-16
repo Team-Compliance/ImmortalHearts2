@@ -5,9 +5,7 @@ local json = require("json")
 
 HeartSubType.HEART_IMMORTAL = 902
 
-mod.savedata = {DataTable = {},CustomHealthAPISave = nil}
-mod.ImmortalSplash = Sprite()
-mod.ImmortalSplash:Load("gfx/ui/ui_remix_hearts.anm2",true)
+mod.savedata = {DataTable = {},CustomHealthAPISave = nil, DSS = {}}
 
 if EID then
 	EID:setModIndicatorName("Immortal Heart")
@@ -59,6 +57,7 @@ local scriptList = {
 	"ModConfigMenu",
 	"ImmortalHeart",
 	"ImmortalClot",
+	"deadseascrolls",
 }
 
 loadscripts(scriptList)
@@ -80,6 +79,7 @@ function mod:OnSave(isSaving)
 	if isSaving then
 		save.PlayerData = mod.savedata.DataTable
 	end
+	save.DSS = mod.savedata.DSS
 	save.SpriteStyle = mod.optionNum
 	save.AppearanceChance = mod.optionChance
 	save.ActOfContrition = mod.optionContrition
@@ -88,8 +88,7 @@ function mod:OnSave(isSaving)
 end
 mod:AddCallback(ModCallbacks.MC_PRE_GAME_EXIT, mod.OnSave)
 
-function mod:OnLoad(isLoading)
-	
+function mod:GetLoadData(isLoading)
 	if mod:HasData() then
 		local save = json.decode(mod:LoadData())
 		if isLoading then
@@ -97,7 +96,10 @@ function mod:OnLoad(isLoading)
 		else
 			mod.savedata.DataTable = {}
 			mod.savedata.CustomHealthAPISave = nil
+			mod.savedata.DSS = {}
 		end
+
+		mod.savedata.DSS = save.DSS and save.DSS or {}
 		mod.optionNum = save.SpriteStyle and save.SpriteStyle or 1
 		mod.optionChance = save.AppearanceChance and save.AppearanceChance or 50
 		mod.optionContrition = save.ActOfContrition and save.ActOfContrition or 1
@@ -105,7 +107,12 @@ function mod:OnLoad(isLoading)
 		mod.optionNum = 1
 		mod.optionChance = 50
 		mod.optionContrition = 1
+		mod.savedata.DSS = {}
 	end
+end
+function mod:OnLoad(isLoading)
+	
+	mod:GetLoadData(isLoading)
 	if EID then
 		if mod.optionContrition == 1 then -- Has to be here because of save data
 			EID:addCollectible(601, "↑ {{Tears}} +0.7 Tears up#{{ImmortalHeart}} +1 Immortal Heart#{{AngelChance}} Allows Angel Rooms to spawn even if you've taken a Devil deal#Taking Red Heart damage doesn't reduce Devil/Angel Room chance as much", "Act of Contrition", "en_us")

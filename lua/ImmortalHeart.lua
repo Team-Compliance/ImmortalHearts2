@@ -59,14 +59,7 @@ CustomHealthAPI.Library.AddCallback("ComplianceImmortal", CustomHealthAPI.Enums.
 			local shatterSPR = Isaac.Spawn(EntityType.ENTITY_EFFECT, 904, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect():GetSprite()
 			shatterSPR.PlaybackSpeed = 2
 		else
-			local cd = 20
-			player:ResetDamageCooldown()
-			player:SetMinDamageCooldown(cd)
-			if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B or player:GetPlayerType() == PlayerType.PLAYER_ESAU
-			or player:GetPlayerType() == PlayerType.PLAYER_JACOB then
-				player:GetOtherTwin():ResetDamageCooldown()
-				player:GetOtherTwin():SetMinDamageCooldown(cd)		
-			end
+			player:GetData().ImmortalHeartDamage = true
 		end
 	end
 end)
@@ -152,6 +145,21 @@ function mod:ActOfImmortal(player)
 	end
 end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.ActOfImmortal)
+
+function mod:ImmortalHeartIFrames(player)
+	if player:GetData().ImmortalHeartDamage then
+		local cd = 20
+		player:ResetDamageCooldown()
+		player:SetMinDamageCooldown(cd)
+		if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B or player:GetPlayerType() == PlayerType.PLAYER_ESAU
+		or player:GetPlayerType() == PlayerType.PLAYER_JACOB then
+			player:GetOtherTwin():ResetDamageCooldown()
+			player:GetOtherTwin():SetMinDamageCooldown(cd)
+		end
+		player:GetData().ImmortalHeartDamage = nil
+	end
+end
+mod:AddCallback(ModCallbacks.MC_POST_PEFFECT_UPDATE, mod.ImmortalHeartIFrames)
 
 function mod:ImmortalHeal()
 	for i = 0, game:GetNumPlayers() - 1 do
