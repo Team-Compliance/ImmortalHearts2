@@ -173,7 +173,7 @@ function mod:PreEternalSpawn(id, var, subtype, pos, vel, spawner, seed)
 	if id == EntityType.ENTITY_PICKUP and var == PickupVariant.PICKUP_HEART and subtype == HeartSubType.HEART_ETERNAL then
 		grng:SetSeed(seed, 0)
 		if grng:RandomFloat() >= (1 - mod.optionChance / 100) then
-			return {id, var, HeartSubType.HEART_ETERNAL, seed }
+			return {id, var, HeartSubType.HEART_IMMORTAL, seed }
 		end
 	end
 end
