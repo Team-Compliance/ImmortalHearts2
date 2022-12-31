@@ -71,7 +71,7 @@ if MinimapAPI then
     local ImmortalSprite = Sprite()
     ImmortalSprite:Load("gfx/ui/immortalheart_icon.anm2", true)
     MinimapAPI:AddIcon("ImmortalIcon", ImmortalSprite, "ImmortalHeart", 0)
-	MinimapAPI:AddPickup(HeartSubType.HEART_IMMORTAL, "ImmortalIcon", EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_IMMORTAL, MinimapAPI.PickupNotCollected, "hearts", 13000)
+	MinimapAPI:AddPickup(HeartSubType.HEART_IMMORTAL, "ImmortalIcon", EntityType.ENTITY_PICKUP, PickupVariant.PICKUP_HEART, HeartSubType.HEART_IMMORTAL, MinimapAPI.PickupNotCollected, "hearts", 14950)
 end
 
 function mod:OnSave(isSaving)
