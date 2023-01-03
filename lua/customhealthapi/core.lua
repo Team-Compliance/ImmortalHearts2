@@ -3,7 +3,7 @@
 
 local version = 0.944
 local root = "lua.customhealthapi."
-local modname = "Custom Health API (Compliance)"
+local modname = "Custom Health API (Compliance Immortal)"
 local modinitials = "CIH"
 
 CustomHealthAPI = CustomHealthAPI or {}
