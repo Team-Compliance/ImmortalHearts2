@@ -71,7 +71,7 @@ mod:AddCallback(ModCallbacks.MC_POST_FAMILIAR_RENDER, mod.StaticHP, 238)
 function mod:ImmortalClotSpawn(baby)
 	local player = baby.Player
 	if baby.SubType == 20 then
-		if ComplianceImmortal.GetImmortalHearts(player) % 2 == 0 then
+		if  ComplianceImmortal.GetImmortalHeartsNum(player) % 2 == 0 then
 			SFXManager():Play(Isaac.GetSoundIdByName("ImmortalHeartBreak"),1,0)
 			local shatterSPR = Isaac.Spawn(EntityType.ENTITY_EFFECT, 904, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect():GetSprite()
 			shatterSPR.PlaybackSpeed = 2
