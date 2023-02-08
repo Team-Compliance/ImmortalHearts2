@@ -1,0 +1,5 @@
+<data>
+  <group Name="Hearts">
+    <entity ID="5" Image="Entities/Immortal Heart.png" Name="Immortal Heart" Subtype="902" Variant="10" />
+  </group>
+</data>
