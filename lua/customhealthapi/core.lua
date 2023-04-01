@@ -1,7 +1,5 @@
--- sorry for the lack of documentation atm
--- this isn't version 1.0 for a reason
+local version = 0.949
 
-local version = 0.944
 local root = "lua.customhealthapi."
 local modname = "Custom Health API (Compliance Immortal)"
 local modinitials = "CIH"
@@ -21,15 +19,17 @@ else
 	shouldLoadMod = true
 end
 
-local anm2TestSprite = Sprite()
-anm2TestSprite:Load("gfx/ui/ui_hearts.anm2", true)
-anm2TestSprite:Play("RedHeartFull", true)
-
-local font = Font()
-font:Load("font/pftempestasevencondensed.fnt")
+local hasBadLoad = nil
 
 if shouldLoadMod then
 	if CustomHealthAPI.Mod then
+		if CustomHealthAPI.CallbacksToRemove then
+			for _, func in pairs(CustomHealthAPI.CallbacksToRemove) do
+				func()
+			end
+		end
+		
+		-- leftover from early versions before addprioritycallback was a thing
 		if CustomHealthAPI.ForceEndCallbacksToRemove then
 			for callback, funcs in pairs(CustomHealthAPI.ForceEndCallbacksToRemove) do
 				for subid, subfuncs in pairs(funcs) do
@@ -44,6 +44,7 @@ if shouldLoadMod then
 			end
 		end
 		
+		-- leftover from early versions before addprioritycallback was a thing
 		if CustomHealthAPI.OtherCallbacksToRemove then
 			for callback, funcs in pairs(CustomHealthAPI.OtherCallbacksToRemove) do
 				for subid, subfuncs in pairs(funcs) do
@@ -72,62 +73,50 @@ if shouldLoadMod then
 	CustomHealthAPI.Mod.AddedCallbacks = false
 	
 	CustomHealthAPI.PersistentData.OriginalAddCallback = CustomHealthAPI.PersistentData.OriginalAddCallback or Isaac.AddCallback
-	CustomHealthAPI.ForceEndCallbacksToAdd = CustomHealthAPI.ForceEndCallbacksToAdd or {}
-	CustomHealthAPI.ForceEndCallbacksToRemove = CustomHealthAPI.ForceEndCallbacksToRemove or {}
-	CustomHealthAPI.OtherCallbacksToAdd = CustomHealthAPI.OtherCallbacksToAdd or {}
-	CustomHealthAPI.OtherCallbacksToRemove = CustomHealthAPI.OtherCallbacksToRemove or {}
-
-	for k,_ in pairs(CustomHealthAPI.ForceEndCallbacksToAdd) do
-		CustomHealthAPI.ForceEndCallbacksToAdd[k] = nil
-	end
-
-	for k,_ in pairs(CustomHealthAPI.ForceEndCallbacksToRemove) do
-		CustomHealthAPI.ForceEndCallbacksToRemove[k] = nil
-	end
-
-	for k,_ in pairs(CustomHealthAPI.OtherCallbacksToAdd) do
-		CustomHealthAPI.OtherCallbacksToAdd[k] = nil
-	end
-
-	for k,_ in pairs(CustomHealthAPI.OtherCallbacksToRemove) do
-		CustomHealthAPI.OtherCallbacksToRemove[k] = nil
+	CustomHealthAPI.CallbacksToAdd = CustomHealthAPI.CallbacksToAdd or {}
+	CustomHealthAPI.CallbacksToRemove = CustomHealthAPI.CallbacksToRemove or {}
+	
+	for k,_ in pairs(CustomHealthAPI.CallbacksToAdd) do
+		CustomHealthAPI.CallbacksToAdd[k] = nil
 	end
 	
-	if not CustomHealthAPI.PersistentData.CallbackHandler then
+	for k,_ in pairs(CustomHealthAPI.CallbacksToRemove) do
+		CustomHealthAPI.CallbacksToRemove[k] = nil
+	end
+
+	-- leftover from early versions before addprioritycallback was a thing
+	if CustomHealthAPI.ForceEndCallbacksToAdd then
+		for k,_ in pairs(CustomHealthAPI.ForceEndCallbacksToAdd) do
+			CustomHealthAPI.ForceEndCallbacksToAdd[k] = nil
+		end
+	end
+
+	-- leftover from early versions before addprioritycallback was a thing
+	if CustomHealthAPI.ForceEndCallbacksToRemove then
+		for k,_ in pairs(CustomHealthAPI.ForceEndCallbacksToRemove) do
+			CustomHealthAPI.ForceEndCallbacksToRemove[k] = nil
+		end
+	end
+
+	-- leftover from early versions before addprioritycallback was a thing
+	if CustomHealthAPI.OtherCallbacksToAdd then
+		for k,_ in pairs(CustomHealthAPI.OtherCallbacksToAdd) do
+			CustomHealthAPI.OtherCallbacksToAdd[k] = nil
+		end
+	end
+
+	-- leftover from early versions before addprioritycallback was a thing
+	if CustomHealthAPI.OtherCallbacksToRemove then
+		for k,_ in pairs(CustomHealthAPI.OtherCallbacksToRemove) do
+			CustomHealthAPI.OtherCallbacksToRemove[k] = nil
+		end
+	end
+	
+	-- leftover from early versions before addprioritycallback was a thing
+	if CustomHealthAPI.PersistentData.CallbackHandler then
 		function CustomHealthAPI.PersistentData.CallbackHandler(self, callbackId, fn, entityId)
 			CustomHealthAPI.PersistentData.OriginalAddCallback(self, callbackId, fn, entityId)
-			
-			local funcsToRemove = CustomHealthAPI.ForceEndCallbacksToRemove[callbackId]
-			if funcsToRemove ~= nil then
-				for subid, subfuncs in pairs(funcsToRemove) do
-					if type(subfuncs) == "table" then
-						if entityId == -1 or entityId == nil or entityId == subid then
-							for _, func in pairs(subfuncs) do
-								func()
-							end
-						end
-					else
-						subfuncs()
-					end
-				end
-			end
-			
-			local funcsToAdd = CustomHealthAPI.ForceEndCallbacksToAdd[callbackId]
-			if funcsToAdd ~= nil then
-				for subid, subfuncs in pairs(funcsToAdd) do
-					if type(subfuncs) == "table" then
-						if entityId == -1 or entityId == nil or entityId == subid then
-							for _, func in pairs(subfuncs) do
-								func()
-							end
-						end
-					else
-						subfuncs()
-					end
-				end
-			end
 		end
-		Isaac.AddCallback = CustomHealthAPI.PersistentData.CallbackHandler
 	end
 
 	include(root .. "definitions.enums")
@@ -148,6 +137,7 @@ if shouldLoadMod then
 	include(root .. "library.misc")
 	include(root .. "definitions.characters")
 	include(root .. "definitions.health")
+	include(root .. "reimpl.actives.clicker")
 	include(root .. "reimpl.actives.genesis")
 	include(root .. "reimpl.actives.glowinghourglass")
 	include(root .. "reimpl.actives.hiddenplayers")
@@ -162,6 +152,7 @@ if shouldLoadMod then
 	include(root .. "reimpl.pills.hematemesis")
 	include(root .. "reimpl.pills.misc")
 	include(root .. "reimpl.apioverrides")
+	include(root .. "reimpl.changeplayertype")
 	include(root .. "reimpl.damage")
 	include(root .. "reimpl.pickups")
 	include(root .. "reimpl.renderhealthbar")
@@ -175,25 +166,31 @@ if shouldLoadMod then
 	include(root .. "savingandloading")
 	
 	function CustomHealthAPI.Helper.CheckBadLoad()
+		local anm2TestSprite = Sprite()
+		anm2TestSprite:Load("gfx/ui/ui_hearts.anm2", true)
+		anm2TestSprite:Play("RedHeartFull", true)
+
 		anm2TestSprite:SetFrame("RedHeartFull", 0)
 		anm2TestSprite:SetLastFrame()
 		return anm2TestSprite:GetFrame() ~= 3
 	end
 	
 	function CustomHealthAPI.Helper.AddTestBadLoadCallback()
-		CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_RENDER, CustomHealthAPI.Mod.TestBadLoadCallback, -1)
+		Isaac.AddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_RENDER, CustomHealthAPI.Mod.TestBadLoadCallback, -1)
 	end
-	CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_POST_RENDER] = CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_POST_RENDER] or {}
-	table.insert(CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_POST_RENDER], CustomHealthAPI.Helper.AddTestBadLoadCallback)
+	table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddTestBadLoadCallback)
 
 	function CustomHealthAPI.Helper.RemoveTestBadLoadCallback()
 		CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_POST_RENDER, CustomHealthAPI.Mod.TestBadLoadCallback)
 	end
-	CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_POST_RENDER] = CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_POST_RENDER] or {}
-	table.insert(CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_POST_RENDER], CustomHealthAPI.Helper.RemoveTestBadLoadCallback)
+	table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveTestBadLoadCallback)
 
 	function CustomHealthAPI.Mod:TestBadLoadCallback()
-		if CustomHealthAPI.Helper.CheckBadLoad() then
+		if hasBadLoad == true or (hasBadLoad == nil and CustomHealthAPI.Helper.CheckBadLoad()) then
+			hasBadLoad = true
+
+			local font = Font()
+			font:Load("font/pftempestasevencondensed.fnt")
 			local fontColor = KColor(1,0.5,0.5,1)
 			
 			if modinitials ~= nil then
@@ -209,31 +206,13 @@ if shouldLoadMod then
 			font:DrawString("or mod incompatibility.",70,150,fontColor,0,false)
 			
 			font:DrawString("You will also need to restart the game after disabling the mod.",70,160,fontColor,0,false)
+		else
+			hasBadLoad = false
 		end
 	end
 
-	for callback, funcs in pairs(CustomHealthAPI.OtherCallbacksToAdd) do
-		for subid, subfuncs in pairs(funcs) do
-			if type(subfuncs) == "table" then
-				for _, func in pairs(subfuncs) do
-					func()
-				end
-			else
-				subfuncs()
-			end
-		end
-	end
-	
-	for callback, funcs in pairs(CustomHealthAPI.ForceEndCallbacksToAdd) do
-		for subid, subfuncs in pairs(funcs) do
-			if type(subfuncs) == "table" then
-				for _, func in pairs(subfuncs) do
-					func()
-				end
-			else
-				subfuncs()
-			end
-		end
+	for _, func in pairs(CustomHealthAPI.CallbacksToAdd) do
+		func()
 	end
 	
 	if not CustomHealthAPI.PersistentData.ShownDisclaimer then

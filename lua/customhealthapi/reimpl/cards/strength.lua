@@ -202,16 +202,15 @@ function CustomHealthAPI.Helper.RemoveTemporaryHP(player, datakey)
 end
 
 function CustomHealthAPI.Helper.AddHandleStrengthOnNewRoomCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_NEW_ROOM, CustomHealthAPI.Mod.HandleStrengthOnNewRoomCallback, -1)
+---@diagnostic disable-next-line: param-type-mismatch
+	Isaac.AddPriorityCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_NEW_ROOM, CallbackPriority.IMPORTANT, CustomHealthAPI.Mod.HandleStrengthOnNewRoomCallback, -1)
 end
-CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_POST_NEW_ROOM] = CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_POST_NEW_ROOM] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_POST_NEW_ROOM], CustomHealthAPI.Helper.AddHandleStrengthOnNewRoomCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddHandleStrengthOnNewRoomCallback)
 
 function CustomHealthAPI.Helper.RemoveHandleStrengthOnNewRoomCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_POST_NEW_ROOM, CustomHealthAPI.Mod.HandleStrengthOnNewRoomCallback)
 end
-CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_POST_NEW_ROOM] = CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_POST_NEW_ROOM] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_POST_NEW_ROOM], CustomHealthAPI.Helper.RemoveHandleStrengthOnNewRoomCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveHandleStrengthOnNewRoomCallback)
 
 function CustomHealthAPI.Mod:HandleStrengthOnNewRoomCallback()
 	for i = 0, Game():GetNumPlayers() - 1 do

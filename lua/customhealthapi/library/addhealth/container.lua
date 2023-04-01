@@ -74,8 +74,8 @@ function CustomHealthAPI.Helper.TryConvertingContainerHP(player, key)
 	end
 end
 
-function CustomHealthAPI.Helper.TryInsertingContainerHP(player, key)
-	if CustomHealthAPI.Helper.GetRoomForOtherKeys(player) > 0 then
+function CustomHealthAPI.Helper.TryInsertingContainerHP(player, key, ignoreRoomForOtherKeys)
+	if CustomHealthAPI.Helper.GetRoomForOtherKeys(player) > 0 or ignoreRoomForOtherKeys then
 		local data = player:GetData().CustomHealthAPISavedata
 		local otherMasks = data.OtherHealthMasks
 		local maskIndex = CustomHealthAPI.PersistentData.HealthDefinitions[key].MaskIndex
@@ -92,7 +92,7 @@ function CustomHealthAPI.Helper.TryInsertingContainerHP(player, key)
 	end
 end
 
-function CustomHealthAPI.Helper.PlusContainerMain(player, key, hp)
+function CustomHealthAPI.Helper.PlusContainerMain(player, key, hp, ignoreRoomForOtherKeys)
 	local maxHP = CustomHealthAPI.Library.GetInfoOfKey(key, "MaxHP")
 	local canHaveHalfCapacity = CustomHealthAPI.PersistentData.HealthDefinitions[key].CanHaveHalfCapacity
 	
@@ -111,7 +111,7 @@ function CustomHealthAPI.Helper.PlusContainerMain(player, key, hp)
 	end
 	
 	while keysToAdd > 0 do
-		CustomHealthAPI.Helper.TryInsertingContainerHP(player, key)
+		CustomHealthAPI.Helper.TryInsertingContainerHP(player, key, ignoreRoomForOtherKeys)
 		keysToAdd = keysToAdd - 1
 		hpToAdd = hpToAdd - hpPer
 	end

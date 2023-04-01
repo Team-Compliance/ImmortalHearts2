@@ -1,16 +1,24 @@
 function CustomHealthAPI.Helper.AddUseCardCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_USE_CARD, CustomHealthAPI.Mod.UseCardCallback, -1)
+---@diagnostic disable-next-line: param-type-mismatch
+	Isaac.AddPriorityCallback(CustomHealthAPI.Mod, ModCallbacks.MC_USE_CARD, CallbackPriority.IMPORTANT, CustomHealthAPI.Mod.UseCardCallback, -1)
 end
-CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_CARD] = CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_CARD] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_CARD], CustomHealthAPI.Helper.AddUseCardCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddUseCardCallback)
 
 function CustomHealthAPI.Helper.RemoveUseCardCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_USE_CARD, CustomHealthAPI.Mod.UseCardCallback)
 end
-CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_CARD] = CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_CARD] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_CARD], CustomHealthAPI.Helper.RemoveUseCardCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveUseCardCallback)
 
 function CustomHealthAPI.Mod:UseCardCallback(card, player, useflags)
+	if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B then
+		if player:GetOtherTwin() ~= nil then
+			return CustomHealthAPI.Mod:UseCardCallback(card, player:GetOtherTwin(), useflags)
+		end
+	end
+	if CustomHealthAPI.Helper.PlayerIsIgnored(player) then 
+		return
+	end
+	
 	local doubled = useflags & UseFlag.USE_CARBATTERY == UseFlag.USE_CARBATTERY
 	if card == Card.CARD_STRENGTH then
 		-- adds a heart container and heals a red heart

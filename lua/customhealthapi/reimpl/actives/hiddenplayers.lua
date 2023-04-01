@@ -2,18 +2,15 @@ CustomHealthAPI.PersistentData.HiddenPlayerHealthBackup = CustomHealthAPI.Persis
 CustomHealthAPI.PersistentData.HiddenSubplayerHealthBackup = CustomHealthAPI.PersistentData.HiddenSubplayerHealthBackup or {}
 
 function CustomHealthAPI.Helper.AddFlipCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_PRE_USE_ITEM, CustomHealthAPI.Mod.FlipCallback, CollectibleType.COLLECTIBLE_FLIP)
+---@diagnostic disable-next-line: param-type-mismatch
+	Isaac.AddPriorityCallback(CustomHealthAPI.Mod, ModCallbacks.MC_PRE_USE_ITEM, CustomHealthAPI.Enums.CallbackPriorities.LATE, CustomHealthAPI.Mod.FlipCallback, CollectibleType.COLLECTIBLE_FLIP)
 end
-CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_PRE_USE_ITEM] = CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_PRE_USE_ITEM] or {}
-CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_PRE_USE_ITEM][CollectibleType.COLLECTIBLE_FLIP] = CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_PRE_USE_ITEM][CollectibleType.COLLECTIBLE_FLIP] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_PRE_USE_ITEM][CollectibleType.COLLECTIBLE_FLIP], CustomHealthAPI.Helper.AddFlipCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddFlipCallback)
 
 function CustomHealthAPI.Helper.RemoveFlipCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_PRE_USE_ITEM, CustomHealthAPI.Mod.FlipCallback)
 end
-CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_PRE_USE_ITEM] = CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_PRE_USE_ITEM] or {}
-CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_PRE_USE_ITEM][CollectibleType.COLLECTIBLE_FLIP] = CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_PRE_USE_ITEM][CollectibleType.COLLECTIBLE_FLIP] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_PRE_USE_ITEM][CollectibleType.COLLECTIBLE_FLIP], CustomHealthAPI.Helper.RemoveFlipCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveFlipCallback)
 
 function CustomHealthAPI.Mod:FlipCallback(id, rng, player)
 	local playertype = player:GetPlayerType()
@@ -26,18 +23,15 @@ function CustomHealthAPI.Mod:FlipCallback(id, rng, player)
 end
 
 function CustomHealthAPI.Helper.AddEsauJrCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_PRE_USE_ITEM, CustomHealthAPI.Mod.EsauJrCallback, CollectibleType.COLLECTIBLE_ESAU_JR)
+---@diagnostic disable-next-line: param-type-mismatch
+	Isaac.AddPriorityCallback(CustomHealthAPI.Mod, ModCallbacks.MC_PRE_USE_ITEM, CustomHealthAPI.Enums.CallbackPriorities.LATE, CustomHealthAPI.Mod.EsauJrCallback, CollectibleType.COLLECTIBLE_ESAU_JR)
 end
-CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_PRE_USE_ITEM] = CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_PRE_USE_ITEM] or {}
-CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_PRE_USE_ITEM][CollectibleType.COLLECTIBLE_ESAU_JR] = CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_PRE_USE_ITEM][CollectibleType.COLLECTIBLE_ESAU_JR] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_PRE_USE_ITEM][CollectibleType.COLLECTIBLE_ESAU_JR], CustomHealthAPI.Helper.AddEsauJrCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddEsauJrCallback)
 
 function CustomHealthAPI.Helper.RemoveEsauJrCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_PRE_USE_ITEM, CustomHealthAPI.Mod.EsauJrCallback)
 end
-CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_PRE_USE_ITEM] = CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_PRE_USE_ITEM] or {}
-CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_PRE_USE_ITEM][CollectibleType.COLLECTIBLE_ESAU_JR] = CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_PRE_USE_ITEM][CollectibleType.COLLECTIBLE_ESAU_JR] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_PRE_USE_ITEM][CollectibleType.COLLECTIBLE_ESAU_JR], CustomHealthAPI.Helper.RemoveEsauJrCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveEsauJrCallback)
 
 function CustomHealthAPI.Mod:EsauJrCallback(id, rng, player)
 	CustomHealthAPI.Helper.CheckHealthIsInitializedForPlayer(player)

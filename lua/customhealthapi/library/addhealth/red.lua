@@ -1,4 +1,4 @@
-function CustomHealthAPI.Helper.TryConvertingRedHP(player, key, overflowedHP)
+function CustomHealthAPI.Helper.TryConvertingRedHP(player, key, overflowedHP, ignoreRoomForRedKeys)
 	local data = player:GetData().CustomHealthAPISavedata
 	local redMasks = data.RedHealthMasks
 	local maskIndex = CustomHealthAPI.PersistentData.HealthDefinitions[key].MaskIndex
@@ -31,7 +31,9 @@ function CustomHealthAPI.Helper.TryConvertingRedHP(player, key, overflowedHP)
 	
 	local maxHP = CustomHealthAPI.Library.GetInfoOfKey(key, "MaxHP")
 	local maxHPOfConvert = CustomHealthAPI.Library.GetInfoOfHealth(healthToConvert, "MaxHP")
-	if CustomHealthAPI.Helper.GetAmountUnoccupiedContainers(player) > 0 and maxHPOfConvert > 1 then
+	if (CustomHealthAPI.Helper.GetAmountUnoccupiedContainers(player) > 0 or ignoreRoomForRedKeys) and 
+	   maxHPOfConvert > 1 
+	then
 		local convertedHP = math.max(0, math.min(healthToConvert.HP, math.max(2, maxHP) - overflowedHP))
 		healthToConvert.HP = healthToConvert.HP - convertedHP
 		overflowedHP = overflowedHP + convertedHP
@@ -66,9 +68,11 @@ function CustomHealthAPI.Helper.TryConvertingRedHP(player, key, overflowedHP)
 	return overflowedHP - overflowAdding
 end
 
-function CustomHealthAPI.Helper.TryInsertingRedHP(player, key, hpAddedByKey, overflowedHP)
+function CustomHealthAPI.Helper.TryInsertingRedHP(player, key, hpAddedByKey, overflowedHP, ignoreRoomForRedKeys)
 	local maxHP = CustomHealthAPI.Library.GetInfoOfKey(key, "MaxHP")
-	if CustomHealthAPI.Helper.GetAmountUnoccupiedContainers(player) > 0 and (maxHP > 1 or hpAddedByKey + overflowedHP >= 2) then
+	if (CustomHealthAPI.Helper.GetAmountUnoccupiedContainers(player) > 0 or ignoreRoomForRedKeys) and 
+	   (maxHP > 1 or hpAddedByKey + overflowedHP >= 2) 
+	then
 		local data = player:GetData().CustomHealthAPISavedata
 		local redMasks = data.RedHealthMasks
 		local maskIndex = CustomHealthAPI.PersistentData.HealthDefinitions[key].MaskIndex
@@ -86,11 +90,11 @@ function CustomHealthAPI.Helper.TryInsertingRedHP(player, key, hpAddedByKey, ove
 		
 		return overflowedHP - overflowAdding
 	else
-		return CustomHealthAPI.Helper.TryConvertingRedHP(player, key, overflowedHP + hpAddedByKey)
+		return CustomHealthAPI.Helper.TryConvertingRedHP(player, key, overflowedHP + hpAddedByKey, ignoreRoomForRedKeys)
 	end
 end
 	
-function CustomHealthAPI.Helper.TryHealingRedHP(player, key, hpAddedByKey, overflowedHP)
+function CustomHealthAPI.Helper.TryHealingRedHP(player, key, hpAddedByKey, overflowedHP, ignoreRoomForRedKeys)
 	local data = player:GetData().CustomHealthAPISavedata
 	local redMasks = data.RedHealthMasks
 	local maskIndex = CustomHealthAPI.PersistentData.HealthDefinitions[key].MaskIndex
@@ -161,11 +165,11 @@ function CustomHealthAPI.Helper.TryHealingRedHP(player, key, hpAddedByKey, overf
 	end
 	
 	if remainingHpAddedByKey > 0 then
-		return CustomHealthAPI.Helper.TryInsertingRedHP(player, key, remainingHpAddedByKey, overflowedHP)
+		return CustomHealthAPI.Helper.TryInsertingRedHP(player, key, remainingHpAddedByKey, overflowedHP, ignoreRoomForRedKeys)
 	elseif healedMatchingKey or prioritizeHealing then
 		return overflowedHP
 	else
-		return CustomHealthAPI.Helper.TryConvertingRedHP(player, key, overflowedHP)
+		return CustomHealthAPI.Helper.TryConvertingRedHP(player, key, overflowedHP, ignoreRoomForRedKeys)
 	end
 end
 
@@ -196,9 +200,9 @@ function CustomHealthAPI.Helper.HealRedAnywhere(player, hp)
 	return remainingHPToHeal
 end
 
-function CustomHealthAPI.Helper.HandleOddNumberedRotten(player)
+function CustomHealthAPI.Helper.HandleOddNumberedRotten(player, ignoreRoomForRedKeys)
 	-- why do rotten hearts function like this in basegame why why why why why why why why why why why
-	if CustomHealthAPI.Helper.GetAmountUnoccupiedContainers(player) <= 0 then
+	if CustomHealthAPI.Helper.GetAmountUnoccupiedContainers(player) <= 0 or ignoreRoomForRedKeys then
 		return false, 0
 	end
 	
@@ -257,14 +261,14 @@ function CustomHealthAPI.Helper.HandleOddNumberedRotten(player)
 	return true, overflowedHP - 2
 end
 
-function CustomHealthAPI.Helper.PlusRedMain(player, key, hp)
+function CustomHealthAPI.Helper.PlusRedMain(player, key, hp, ignoreRoomForRedKeys)
 	local maxHP = CustomHealthAPI.Library.GetInfoOfKey(key, "MaxHP")
 	local hpToAdd = hp
 	
 	local overflowedHP = 0
 	if key == "ROTTEN_HEART" and hpToAdd % 2 == 1 then
 		-- dumb odd number rotten heart bullshit
-		local addedHeart, overflowHP = CustomHealthAPI.Helper.HandleOddNumberedRotten(player)
+		local addedHeart, overflowHP = CustomHealthAPI.Helper.HandleOddNumberedRotten(player, ignoreRoomForRedKeys)
 		
 		overflowedHP = overflowedHP + overflowHP
 		if addedHeart then
@@ -287,7 +291,7 @@ function CustomHealthAPI.Helper.PlusRedMain(player, key, hp)
 			hpAddedByKey = math.min(hpToAdd, 2)
 		end
 		
-		overflowedHP = CustomHealthAPI.Helper.TryHealingRedHP(player, key, hpAddedByKey, overflowedHP)
+		overflowedHP = CustomHealthAPI.Helper.TryHealingRedHP(player, key, hpAddedByKey, overflowedHP, ignoreRoomForRedKeys)
 		overflowedHP = CustomHealthAPI.Helper.HealRedAnywhere(player, overflowedHP)
 		
 		hpToAdd = hpToAdd - hpAddedByKey
@@ -307,9 +311,9 @@ function CustomHealthAPI.Helper.TryRemoveLowPriorityRedFromMask(player, maskInde
 	
 	local lastHealth = mask[#mask]
 	
-	if lastHealth.HP > hpToRemove then
+	if lastHealth and lastHealth.HP > hpToRemove then
 		lastHealth.HP = lastHealth.HP - hpToRemove
-		return hpToRemove
+		return hpToRemove, lastHealth.Key
 	end
 	local maxHpOfLast = CustomHealthAPI.Library.GetInfoOfHealth(lastHealth, "MaxHP")
 	
@@ -337,9 +341,9 @@ function CustomHealthAPI.Helper.TryRemoveLowPriorityRedFromMask(player, maskInde
 		end
 		
 		if maxHpOfLowestPriority <= 1 then
-			return 2
+			return 2, lowestPriorityHealth.Key
 		else
-			return removableHP
+			return removableHP, lowestPriorityHealth.Key
 		end
 	elseif lowestPriorityHealth then
 		local maxHpOfLowestPriority = CustomHealthAPI.Library.GetInfoOfHealth(lowestPriorityHealth, "MaxHP")
@@ -364,13 +368,13 @@ function CustomHealthAPI.Helper.TryRemoveLowPriorityRedFromMask(player, maskInde
 		lastHealth.HP = lastHealth.HP + healableHP
 		
 		if maxHpOfLowestPriority <= 1 then
-			return 2 - healableHP
+			return 2 - healableHP, lowestPriorityHealth.Key
 		else
-			return removableHP - healableHP
+			return removableHP - healableHP, lowestPriorityHealth.Key
 		end
 	end
 	
-	return 0
+	return 0, nil
 end
 
 function CustomHealthAPI.Helper.TryRemoveLowPriorityRedFromAnywhere(player, hpToRemove)
@@ -417,7 +421,7 @@ function CustomHealthAPI.Helper.MinusRedMain(player, key, hp)
 	end
 	
 	if hpToRemove < 0 then
-		CustomHealthAPI.Helper.UpdateHealthMasks(player, "RED_HEART", math.abs(hpToRemove), false, false, false, true)
+		CustomHealthAPI.Helper.UpdateHealthMasks(player, "RED_HEART", math.abs(hpToRemove), false, false, false, true, true)
 	end
 end
 

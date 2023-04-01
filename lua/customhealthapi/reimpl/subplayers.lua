@@ -1,6 +1,6 @@
 function CustomHealthAPI.Helper.SplitSubPlayerInfo(player)
 	-- THIS FUNCTION HAS BEEN WRITTEN ASSUMING THE PLAYER IS THE FORGOTTEN
-	-- IF THEY WERE NOT, WELL FUCK
+	-- IF THEY ARE NOT, WELL FUCK
 	
 	--[[local maindata = player:GetData().CustomHealthAPISavedata
 	maindata.SubPlayerInfo = {}
@@ -99,6 +99,12 @@ function CustomHealthAPI.Helper.CheckIfSwapSubPlayerInfo(player)
 	if expectedPlayerType == actualSubplayerType and expectedSubplayerType == actualPlayerType then
 		player:GetData().CustomHealthAPISavedata = subdata
 		player:GetSubPlayer():GetData().CustomHealthAPISavedata = maindata
+		
+		local mainqueued = maindata.CurrentQueuedItem
+		local subqueued = subdata.CurrentQueuedItem
+		
+		maindata.CurrentQueuedItem = subqueued
+		subdata.CurrentQueuedItem = mainqueued
 		
 		local mainotherdata = player:GetData().CustomHealthAPIOtherData
 		local subotherdata = player:GetSubPlayer():GetData().CustomHealthAPIOtherData

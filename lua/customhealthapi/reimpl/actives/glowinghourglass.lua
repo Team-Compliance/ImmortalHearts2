@@ -1,22 +1,41 @@
 CustomHealthAPI.PersistentData.UsingGlowingHourglass = CustomHealthAPI.PersistentData.UsingGlowingHourglass or false
 CustomHealthAPI.PersistentData.GlowingHourglassBackup = CustomHealthAPI.PersistentData.GlowingHourglassBackup or nil
 
+local isReversingTime = false
+
 function CustomHealthAPI.Helper.AddUseGlowingHourglassCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_USE_ITEM, CustomHealthAPI.Mod.UseGlowingHourglassCallback, CollectibleType.COLLECTIBLE_GLOWING_HOUR_GLASS)
+	Isaac.AddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_USE_ITEM, CustomHealthAPI.Mod.UseGlowingHourglassCallback, CollectibleType.COLLECTIBLE_GLOWING_HOUR_GLASS)
 end
-CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM] = CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM] or {}
-CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_GLOWING_HOUR_GLASS] = CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_GLOWING_HOUR_GLASS] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_GLOWING_HOUR_GLASS], CustomHealthAPI.Helper.AddUseGlowingHourglassCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddUseGlowingHourglassCallback)
 
 function CustomHealthAPI.Helper.RemoveUseGlowingHourglassCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_USE_ITEM, CustomHealthAPI.Mod.UseGlowingHourglassCallback)
 end
-CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM] = CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM] or {}
-CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_GLOWING_HOUR_GLASS] = CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_GLOWING_HOUR_GLASS] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_GLOWING_HOUR_GLASS], CustomHealthAPI.Helper.RemoveUseGlowingHourglassCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveUseGlowingHourglassCallback)
 
 function CustomHealthAPI.Mod:UseGlowingHourglassCallback()
-	CustomHealthAPI.PersistentData.UsingGlowingHourglass = true
+	if isReversingTime then
+		CustomHealthAPI.PersistentData.UsingGlowingHourglass = true
+	end
+end
+
+function CustomHealthAPI.Helper.AddPreUseGlowingHourglassCallback()
+	Isaac.AddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_PRE_USE_ITEM, CustomHealthAPI.Mod.PreUseGlowingHourglassCallback, CollectibleType.COLLECTIBLE_GLOWING_HOUR_GLASS)
+end
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddPreUseGlowingHourglassCallback)
+
+function CustomHealthAPI.Helper.RemovePreUseGlowingHourglassCallback()
+	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_PRE_USE_ITEM, CustomHealthAPI.Mod.PreUseGlowingHourglassCallback)
+end
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemovePreUseGlowingHourglassCallback)
+
+function CustomHealthAPI.Mod:PreUseGlowingHourglassCallback(collectible, rng, player, useflags, activeslot, vardata)
+	-- why does this not use vardata wtf
+	if activeslot ~= -1 then
+		isReversingTime = player:GetActiveCharge(activeslot) <= 0
+	else
+		isReversingTime = true
+	end
 end
 
 function CustomHealthAPI.Helper.BackupHealthForGlowingHourglass()

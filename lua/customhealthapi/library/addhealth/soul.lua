@@ -1,4 +1,4 @@
-function CustomHealthAPI.Helper.TryConvertingSoulHP(player, key, overflowedHP)
+function CustomHealthAPI.Helper.TryConvertingSoulHP(player, key, overflowedHP, ignoreRoomForOtherKeys)
 	local data = player:GetData().CustomHealthAPISavedata
 	local otherMasks = data.OtherHealthMasks
 	local maskIndex = CustomHealthAPI.PersistentData.HealthDefinitions[key].MaskIndex
@@ -32,7 +32,9 @@ function CustomHealthAPI.Helper.TryConvertingSoulHP(player, key, overflowedHP)
 	
 	local maxHP = CustomHealthAPI.Library.GetInfoOfKey(key, "MaxHP")
 	local maxHPOfConvert = CustomHealthAPI.Library.GetInfoOfHealth(healthToConvert, "MaxHP")
-	if CustomHealthAPI.Helper.GetRoomForOtherKeys(player) > 0 and maxHPOfConvert > 1 then
+	if (CustomHealthAPI.Helper.GetRoomForOtherKeys(player) > 0 or ignoreRoomForOtherKeys) and 
+	   maxHPOfConvert > 1 
+	then
 		local convertedHP = math.max(0, math.min(healthToConvert.HP, math.max(2, maxHP) - overflowedHP))
 		healthToConvert.HP = healthToConvert.HP - convertedHP
 		overflowedHP = overflowedHP + convertedHP
@@ -67,9 +69,11 @@ function CustomHealthAPI.Helper.TryConvertingSoulHP(player, key, overflowedHP)
 	return overflowedHP - overflowAdding
 end
 
-function CustomHealthAPI.Helper.TryInsertingSoulHP(player, key, hpAddedByKey, overflowedHP)
+function CustomHealthAPI.Helper.TryInsertingSoulHP(player, key, hpAddedByKey, overflowedHP, ignoreRoomForOtherKeys)
 	local maxHP = CustomHealthAPI.Library.GetInfoOfKey(key, "MaxHP")
-	if CustomHealthAPI.Helper.GetRoomForOtherKeys(player) > 0 and (maxHP > 1 or hpAddedByKey + overflowedHP >= 2) then
+	if (CustomHealthAPI.Helper.GetRoomForOtherKeys(player) > 0 or ignoreRoomForOtherKeys) and 
+	   (maxHP > 1 or hpAddedByKey + overflowedHP >= 2) 
+	then
 		local data = player:GetData().CustomHealthAPISavedata
 		local otherMasks = data.OtherHealthMasks
 		local maskIndex = CustomHealthAPI.PersistentData.HealthDefinitions[key].MaskIndex
@@ -87,11 +91,11 @@ function CustomHealthAPI.Helper.TryInsertingSoulHP(player, key, hpAddedByKey, ov
 		
 		return overflowedHP - overflowAdding
 	else
-		return CustomHealthAPI.Helper.TryConvertingSoulHP(player, key, overflowedHP + hpAddedByKey)
+		return CustomHealthAPI.Helper.TryConvertingSoulHP(player, key, overflowedHP + hpAddedByKey, ignoreRoomForOtherKeys)
 	end
 end
 
-function CustomHealthAPI.Helper.TryHealingSoulHP(player, key, hpAddedByKey, overflowedHP)
+function CustomHealthAPI.Helper.TryHealingSoulHP(player, key, hpAddedByKey, overflowedHP, ignoreRoomForOtherKeys)
 	local data = player:GetData().CustomHealthAPISavedata
 	local otherMasks = data.OtherHealthMasks
 	local maskIndex = CustomHealthAPI.PersistentData.HealthDefinitions[key].MaskIndex
@@ -166,11 +170,11 @@ function CustomHealthAPI.Helper.TryHealingSoulHP(player, key, hpAddedByKey, over
 	end
 	
 	if remainingHpAddedByKey > 0 then
-		return CustomHealthAPI.Helper.TryInsertingSoulHP(player, key, remainingHpAddedByKey, overflowedHP)
+		return CustomHealthAPI.Helper.TryInsertingSoulHP(player, key, remainingHpAddedByKey, overflowedHP, ignoreRoomForOtherKeys)
 	elseif healedMatchingKey or prioritizeHealing then
 		return overflowedHP
 	else
-		return CustomHealthAPI.Helper.TryConvertingSoulHP(player, key, overflowedHP)
+		return CustomHealthAPI.Helper.TryConvertingSoulHP(player, key, overflowedHP, ignoreRoomForOtherKeys)
 	end
 end
 
@@ -203,7 +207,7 @@ function CustomHealthAPI.Helper.HealSoulAnywhere(player, hp)
 	return remainingHPToHeal
 end
 
-function CustomHealthAPI.Helper.PlusSoulMain(player, key, hp)
+function CustomHealthAPI.Helper.PlusSoulMain(player, key, hp, ignoreRoomForOtherKeys)
 	local maxHP = CustomHealthAPI.Library.GetInfoOfKey(key, "MaxHP")
 	local hpToAdd = hp
 	
@@ -221,7 +225,7 @@ function CustomHealthAPI.Helper.PlusSoulMain(player, key, hp)
 			hpAddedByKey = math.min(hpToAdd, 2)
 		end
 		
-		overflowedHP = CustomHealthAPI.Helper.TryHealingSoulHP(player, key, hpAddedByKey, overflowedHP)
+		overflowedHP = CustomHealthAPI.Helper.TryHealingSoulHP(player, key, hpAddedByKey, overflowedHP, ignoreRoomForOtherKeys)
 		overflowedHP = CustomHealthAPI.Helper.HealSoulAnywhere(player, overflowedHP)
 		
 		hpToAdd = hpToAdd - hpAddedByKey
@@ -279,7 +283,7 @@ function CustomHealthAPI.Helper.TryRemoveLowPrioritySoulFromMask(player, maskInd
 	
 	if lastHealth.HP > hpToRemove then
 		lastHealth.HP = lastHealth.HP - hpToRemove
-		return hpToRemove
+		return hpToRemove, lastHealth.Key
 	end
 	local maxHpOfLast = CustomHealthAPI.Library.GetInfoOfHealth(lastHealth, "MaxHP")
 	
@@ -293,9 +297,9 @@ function CustomHealthAPI.Helper.TryRemoveLowPrioritySoulFromMask(player, maskInd
 		end
 		
 		if maxHpOfLowestPriority <= 1 then
-			return 2
+			return 2, lowestPriorityHealth.Key
 		else
-			return removableHP
+			return removableHP, lowestPriorityHealth.Key
 		end
 	elseif lowestPriorityHealth then
 		local maxHpOfLowestPriority = CustomHealthAPI.Library.GetInfoOfHealth(lowestPriorityHealth, "MaxHP")
@@ -320,13 +324,13 @@ function CustomHealthAPI.Helper.TryRemoveLowPrioritySoulFromMask(player, maskInd
 		lastHealth.HP = lastHealth.HP + healableHP
 		
 		if maxHpOfLowestPriority <= 1 then
-			return 2 - healableHP
+			return 2 - healableHP, lowestPriorityHealth.Key
 		else
-			return removableHP - healableHP
+			return removableHP - healableHP, lowestPriorityHealth.Key
 		end
 	end
 	
-	return 0
+	return 0, nil
 end
 
 function CustomHealthAPI.Helper.TryRemoveLowPrioritySoulFromAnywhere(player, hpToRemove)

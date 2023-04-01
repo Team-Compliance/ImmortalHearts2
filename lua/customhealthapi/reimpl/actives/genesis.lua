@@ -1,18 +1,15 @@
 CustomHealthAPI.PersistentData.UsingGenesis = CustomHealthAPI.PersistentData.UsingGenesis or false
 
 function CustomHealthAPI.Helper.AddUseGenesisCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_USE_ITEM, CustomHealthAPI.Mod.UseGenesisCallback, CollectibleType.COLLECTIBLE_GENESIS)
+---@diagnostic disable-next-line: param-type-mismatch
+	Isaac.AddPriorityCallback(CustomHealthAPI.Mod, ModCallbacks.MC_USE_ITEM, CustomHealthAPI.Enums.CallbackPriorities.LATE, CustomHealthAPI.Mod.UseGenesisCallback, CollectibleType.COLLECTIBLE_GENESIS)
 end
-CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM] = CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM] or {}
-CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_GENESIS] = CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_GENESIS] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_GENESIS], CustomHealthAPI.Helper.AddUseGenesisCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddUseGenesisCallback)
 
 function CustomHealthAPI.Helper.RemoveUseGenesisCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_USE_ITEM, CustomHealthAPI.Mod.UseGenesisCallback)
 end
-CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM] = CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM] or {}
-CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_GENESIS] = CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_GENESIS] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_GENESIS], CustomHealthAPI.Helper.RemoveUseGenesisCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveUseGenesisCallback)
 
 function CustomHealthAPI.Mod:UseGenesisCallback()
 	CustomHealthAPI.PersistentData.UsingGenesis = true

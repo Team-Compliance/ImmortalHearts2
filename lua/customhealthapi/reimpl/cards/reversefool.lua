@@ -104,19 +104,19 @@ function CustomHealthAPI.Helper.HandleReverseFool(player)
 	
 	if hasMax and highestPriorityRedKey ~= nil then
 		if CustomHealthAPI.Library.GetInfoOfKey(highestPriorityRedKey, "MaxHP") <= 1 then
-			CustomHealthAPI.Helper.UpdateHealthMasks(player, highestPriorityRedKey, 2, true, false, true, true)
+			CustomHealthAPI.Helper.UpdateHealthMasks(player, highestPriorityRedKey, 2, true, false, true, true, true)
 		else
-			CustomHealthAPI.Helper.UpdateHealthMasks(player, highestPriorityRedKey, 1, true, false, true, true)
+			CustomHealthAPI.Helper.UpdateHealthMasks(player, highestPriorityRedKey, 1, true, false, true, true, true)
 		end
 		redTotals[highestPriorityRedKey] = redTotals[highestPriorityRedKey] - 1
 	elseif highestPriorityBoneKey ~= nil then
-		CustomHealthAPI.Helper.UpdateHealthMasks(player, highestPriorityBoneKey, 1, true, false, true, true)
+		CustomHealthAPI.Helper.UpdateHealthMasks(player, highestPriorityBoneKey, 1, true, false, true, true, true)
 		boneTotals[highestPriorityBoneKey] = boneTotals[highestPriorityBoneKey] - 1
 	elseif highestPrioritySoulKey ~= nil then
 		if CustomHealthAPI.Library.GetInfoOfKey(highestPrioritySoulKey, "MaxHP") <= 1 then
-			CustomHealthAPI.Helper.UpdateHealthMasks(player, highestPrioritySoulKey, 2, true, false, true, true)
+			CustomHealthAPI.Helper.UpdateHealthMasks(player, highestPrioritySoulKey, 2, true, false, true, true, true)
 		else
-			CustomHealthAPI.Helper.UpdateHealthMasks(player, highestPrioritySoulKey, 1, true, false, true, true)
+			CustomHealthAPI.Helper.UpdateHealthMasks(player, highestPrioritySoulKey, 1, true, false, true, true, true)
 		end
 		soulTotals[highestPrioritySoulKey] = soulTotals[highestPrioritySoulKey] - 1
 	end

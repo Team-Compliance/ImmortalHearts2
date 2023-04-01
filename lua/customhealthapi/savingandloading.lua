@@ -1,16 +1,15 @@
 CustomHealthAPI.PersistentData.SaveDataLoaded = CustomHealthAPI.PersistentData.SaveDataLoaded or false
 
 function CustomHealthAPI.Helper.AddSaveDataOnNewLevelCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_NEW_LEVEL, CustomHealthAPI.Mod.SaveDataOnNewLevelCallback, -1)
+---@diagnostic disable-next-line: param-type-mismatch
+	Isaac.AddPriorityCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_NEW_LEVEL, CustomHealthAPI.Enums.CallbackPriorities.LATE, CustomHealthAPI.Mod.SaveDataOnNewLevelCallback, -1)
 end
-CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_POST_NEW_LEVEL] = CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_POST_NEW_LEVEL] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_POST_NEW_LEVEL], CustomHealthAPI.Helper.AddSaveDataOnNewLevelCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddSaveDataOnNewLevelCallback)
 
 function CustomHealthAPI.Helper.RemoveSaveDataOnNewLevelCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_POST_NEW_LEVEL, CustomHealthAPI.Mod.SaveDataOnNewLevelCallback)
 end
-CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_POST_NEW_LEVEL] = CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_POST_NEW_LEVEL] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_POST_NEW_LEVEL], CustomHealthAPI.Helper.RemoveSaveDataOnNewLevelCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveSaveDataOnNewLevelCallback)
 
 function CustomHealthAPI.Mod:SaveDataOnNewLevelCallback()
 	CustomHealthAPI.PersistentData.RestockInfo = {}
@@ -20,16 +19,15 @@ function CustomHealthAPI.Mod:SaveDataOnNewLevelCallback()
 end
 
 function CustomHealthAPI.Helper.AddSaveDataOnExitCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_PRE_GAME_EXIT, CustomHealthAPI.Mod.SaveDataOnExitCallback, -1)
+---@diagnostic disable-next-line: param-type-mismatch
+	Isaac.AddPriorityCallback(CustomHealthAPI.Mod, ModCallbacks.MC_PRE_GAME_EXIT, CustomHealthAPI.Enums.CallbackPriorities.LATE, CustomHealthAPI.Mod.SaveDataOnExitCallback, -1)
 end
-CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_PRE_GAME_EXIT] = CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_PRE_GAME_EXIT] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_PRE_GAME_EXIT], CustomHealthAPI.Helper.AddSaveDataOnExitCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddSaveDataOnExitCallback)
 
 function CustomHealthAPI.Helper.RemoveSaveDataOnExitCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_PRE_GAME_EXIT, CustomHealthAPI.Mod.SaveDataOnExitCallback)
 end
-CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_PRE_GAME_EXIT] = CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_PRE_GAME_EXIT] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_PRE_GAME_EXIT], CustomHealthAPI.Helper.RemoveSaveDataOnExitCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveSaveDataOnExitCallback)
 
 function CustomHealthAPI.Mod:SaveDataOnExitCallback(shouldSave)
 	if shouldSave then
@@ -40,16 +38,15 @@ function CustomHealthAPI.Mod:SaveDataOnExitCallback(shouldSave)
 end
 
 function CustomHealthAPI.Helper.AddHandleSaveDataOnGameStartCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_GAME_STARTED, CustomHealthAPI.Mod.HandleSaveDataOnGameStartCallback, -1)
+---@diagnostic disable-next-line: param-type-mismatch
+	Isaac.AddPriorityCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_GAME_STARTED, CustomHealthAPI.Enums.CallbackPriorities.LATE, CustomHealthAPI.Mod.HandleSaveDataOnGameStartCallback, -1)
 end
-CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_POST_GAME_STARTED] = CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_POST_GAME_STARTED] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_POST_GAME_STARTED], CustomHealthAPI.Helper.AddHandleSaveDataOnGameStartCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddHandleSaveDataOnGameStartCallback)
 
 function CustomHealthAPI.Helper.RemoveHandleSaveDataOnGameStartCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_POST_GAME_STARTED, CustomHealthAPI.Mod.HandleSaveDataOnGameStartCallback)
 end
-CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_POST_GAME_STARTED] = CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_POST_GAME_STARTED] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_POST_GAME_STARTED], CustomHealthAPI.Helper.RemoveHandleSaveDataOnGameStartCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveHandleSaveDataOnGameStartCallback)
 
 function CustomHealthAPI.Mod:HandleSaveDataOnGameStartCallback(isContinued)
 	CustomHealthAPI.PersistentData.HiddenPlayerHealthBackup = {}

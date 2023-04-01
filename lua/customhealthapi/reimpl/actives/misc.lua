@@ -1,14 +1,13 @@
 function CustomHealthAPI.Helper.AddGenesisAndGlowingHourglassOnNewRoomCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_NEW_ROOM, CustomHealthAPI.Mod.GenesisAndGlowingHourglassOnNewRoomCallback, -1)
+---@diagnostic disable-next-line: param-type-mismatch
+	Isaac.AddPriorityCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_NEW_ROOM, CustomHealthAPI.Enums.CallbackPriorities.LATE, CustomHealthAPI.Mod.GenesisAndGlowingHourglassOnNewRoomCallback, -1)
 end
-CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_POST_NEW_ROOM] = CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_POST_NEW_ROOM] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_POST_NEW_ROOM], CustomHealthAPI.Helper.AddGenesisAndGlowingHourglassOnNewRoomCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddGenesisAndGlowingHourglassOnNewRoomCallback)
 
 function CustomHealthAPI.Helper.RemoveGenesisAndGlowingHourglassOnNewRoomCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_POST_NEW_ROOM, CustomHealthAPI.Mod.GenesisAndGlowingHourglassOnNewRoomCallback)
 end
-CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_POST_NEW_ROOM] = CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_POST_NEW_ROOM] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_POST_NEW_ROOM], CustomHealthAPI.Helper.RemoveGenesisAndGlowingHourglassOnNewRoomCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveGenesisAndGlowingHourglassOnNewRoomCallback)
 
 function CustomHealthAPI.Mod:GenesisAndGlowingHourglassOnNewRoomCallback()
 	if CustomHealthAPI.PersistentData.UsingGenesis then
@@ -24,18 +23,26 @@ function CustomHealthAPI.Mod:GenesisAndGlowingHourglassOnNewRoomCallback()
 end
 
 function CustomHealthAPI.Helper.AddUseItemCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_USE_ITEM, CustomHealthAPI.Mod.UseItemCallback, -1)
+---@diagnostic disable-next-line: param-type-mismatch
+	Isaac.AddPriorityCallback(CustomHealthAPI.Mod, ModCallbacks.MC_USE_ITEM, CallbackPriority.IMPORTANT, CustomHealthAPI.Mod.UseItemCallback, -1)
 end
-CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM] = CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM], CustomHealthAPI.Helper.AddUseItemCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddUseItemCallback)
 
 function CustomHealthAPI.Helper.RemoveUseItemCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_USE_ITEM, CustomHealthAPI.Mod.UseItemCallback)
 end
-CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM] = CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM], CustomHealthAPI.Helper.RemoveUseItemCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveUseItemCallback)
 
 function CustomHealthAPI.Mod:UseItemCallback(collectible, rng, player, useflags)
+	if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B then
+		if player:GetOtherTwin() ~= nil then
+			return CustomHealthAPI.Mod:UseItemCallback(collectible, rng, player:GetOtherTwin(), useflags)
+		end
+	end
+	if CustomHealthAPI.Helper.PlayerIsIgnored(player) then 
+		return
+	end
+	
 	--local doubled = useflags & UseFlag.USE_CARBATTERY == UseFlag.USE_CARBATTERY
 	if collectible == CollectibleType.COLLECTIBLE_BOOK_OF_REVELATIONS then
 		-- adds a soul heart
@@ -151,16 +158,14 @@ function CustomHealthAPI.Mod:UseItemCallback(collectible, rng, player, useflags)
 end
 
 function CustomHealthAPI.Helper.AddPreUseItemCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_PRE_USE_ITEM, CustomHealthAPI.Mod.PreUseItemCallback, -1)
+	Isaac.AddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_PRE_USE_ITEM, CustomHealthAPI.Mod.PreUseItemCallback, -1)
 end
-CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_PRE_USE_ITEM] = CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_PRE_USE_ITEM] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_PRE_USE_ITEM], CustomHealthAPI.Helper.AddPreUseItemCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddPreUseItemCallback)
 
 function CustomHealthAPI.Helper.RemovePreUseItemCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_PRE_USE_ITEM, CustomHealthAPI.Mod.PreUseItemCallback)
 end
-CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_PRE_USE_ITEM] = CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_PRE_USE_ITEM] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_PRE_USE_ITEM], CustomHealthAPI.Helper.RemovePreUseItemCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemovePreUseItemCallback)
 
 function CustomHealthAPI.Mod:PreUseItemCallback(collectible, rng, player)
 	if collectible == CollectibleType.COLLECTIBLE_BOOK_OF_REVELATIONS or

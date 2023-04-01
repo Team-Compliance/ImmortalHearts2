@@ -3,8 +3,8 @@ function CustomHealthAPI.Helper.InitializeRedHealthMasks(player)
 	local rotten = CustomHealthAPI.PersistentData.OverriddenFunctions.GetRottenHearts(player)
 	local red = total - (rotten * 2)
 	
-	CustomHealthAPI.Helper.UpdateHealthMasks(player, "ROTTEN_HEART", rotten, true, false, false, true)
-	CustomHealthAPI.Helper.UpdateHealthMasks(player, "RED_HEART", red, true, false, false, true)
+	CustomHealthAPI.Helper.UpdateHealthMasks(player, "ROTTEN_HEART", rotten, true, false, false, true, true)
+	CustomHealthAPI.Helper.UpdateHealthMasks(player, "RED_HEART", red, true, false, false, true, true)
 	
 	--[[player:GetData().CustomHealthAPISavedata = player:GetData().CustomHealthAPISavedata or {}
 	local data = player:GetData().CustomHealthAPISavedata

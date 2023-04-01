@@ -2,16 +2,15 @@ local bleedingSprite = Sprite()
 bleedingSprite:Load("gfx/statuseffects.anm2", true)
 
 function CustomHealthAPI.Helper.AddUpdateShardOfGlassColorCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_PEFFECT_UPDATE, CustomHealthAPI.Mod.UpdateShardOfGlassColorCallback, -1)
+---@diagnostic disable-next-line: param-type-mismatch
+	Isaac.AddPriorityCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_PEFFECT_UPDATE, CustomHealthAPI.Enums.CallbackPriorities.LATE, CustomHealthAPI.Mod.UpdateShardOfGlassColorCallback, -1)
 end
-CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_POST_PEFFECT_UPDATE] = CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_POST_PEFFECT_UPDATE] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_POST_PEFFECT_UPDATE], CustomHealthAPI.Helper.AddUpdateShardOfGlassColorCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddUpdateShardOfGlassColorCallback)
 
 function CustomHealthAPI.Helper.RemoveUpdateShardOfGlassColorCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_POST_PEFFECT_UPDATE, CustomHealthAPI.Mod.UpdateShardOfGlassColorCallback)
 end
-CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_POST_PEFFECT_UPDATE] = CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_POST_PEFFECT_UPDATE] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_POST_PEFFECT_UPDATE], CustomHealthAPI.Helper.RemoveUpdateShardOfGlassColorCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveUpdateShardOfGlassColorCallback)
 
 function CustomHealthAPI.Mod:UpdateShardOfGlassColorCallback(player)
 	CustomHealthAPI.Helper.CheckIfHealthOrderSet()
@@ -22,16 +21,15 @@ function CustomHealthAPI.Mod:UpdateShardOfGlassColorCallback(player)
 end
 
 function CustomHealthAPI.Helper.AddUpdateShardOfGlassCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_PLAYER_UPDATE, CustomHealthAPI.Mod.UpdateShardOfGlassCallback, -1)
+---@diagnostic disable-next-line: param-type-mismatch
+	Isaac.AddPriorityCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_PLAYER_UPDATE, CustomHealthAPI.Enums.CallbackPriorities.LATE, CustomHealthAPI.Mod.UpdateShardOfGlassCallback, -1)
 end
-CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_POST_PLAYER_UPDATE] = CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_POST_PLAYER_UPDATE] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_POST_PLAYER_UPDATE], CustomHealthAPI.Helper.AddUpdateShardOfGlassCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddUpdateShardOfGlassCallback)
 
 function CustomHealthAPI.Helper.RemoveUpdateShardOfGlassCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, CustomHealthAPI.Mod.UpdateShardOfGlassCallback)
 end
-CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_POST_PLAYER_UPDATE] = CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_POST_PLAYER_UPDATE] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_POST_PLAYER_UPDATE], CustomHealthAPI.Helper.RemoveUpdateShardOfGlassCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveUpdateShardOfGlassCallback)
 
 function CustomHealthAPI.Mod:UpdateShardOfGlassCallback(player)
 	CustomHealthAPI.Helper.CheckIfHealthOrderSet()
@@ -84,7 +82,8 @@ function CustomHealthAPI.Helper.UpdateShardOfGlass(player)
 	if data and 
 	   data.ShardBleedTimer ~= nil and
 	   (CustomHealthAPI.Helper.GetTotalRedHP(player, true) <= 0 or 
-	    CustomHealthAPI.Helper.GetTotalHP(player) <= 1)
+	    CustomHealthAPI.Helper.GetTotalHP(player) <= 1 or
+		player:GetEffects():HasNullEffect(NullItemID.ID_LOST_CURSE))
 	then 
 		data.ShardBleedTimer = nil 
 	end

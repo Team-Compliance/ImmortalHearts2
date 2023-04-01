@@ -79,16 +79,14 @@ function CustomHealthAPI.Helper.HasCustomRestocked(pickup)
 end
 
 function CustomHealthAPI.Helper.AddRestockPickupsCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_UPDATE, CustomHealthAPI.Mod.RestockPickupsCallback, -1)
+	Isaac.AddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_UPDATE, CustomHealthAPI.Mod.RestockPickupsCallback, -1)
 end
-CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_POST_UPDATE] = CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_POST_UPDATE] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_POST_UPDATE], CustomHealthAPI.Helper.AddRestockPickupsCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddRestockPickupsCallback)
 
 function CustomHealthAPI.Helper.RemoveRestockPickupsCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_POST_UPDATE, CustomHealthAPI.Mod.RestockPickupsCallback)
 end
-CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_POST_UPDATE] = CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_POST_UPDATE] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_POST_UPDATE], CustomHealthAPI.Helper.RemoveRestockPickupsCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveRestockPickupsCallback)
 
 function CustomHealthAPI.Mod:RestockPickupsCallback()
 	local level = Game():GetLevel()
@@ -267,16 +265,15 @@ function CustomHealthAPI.Helper.TryRemoveStoreCredit(player)
 end
 
 function CustomHealthAPI.Helper.AddUpdatePickupPriceCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_PICKUP_UPDATE, CustomHealthAPI.Mod.UpdatePickupPriceCallback, -1)
+---@diagnostic disable-next-line: param-type-mismatch
+	Isaac.AddPriorityCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_PICKUP_UPDATE, CustomHealthAPI.Enums.CallbackPriorities.LATE, CustomHealthAPI.Mod.UpdatePickupPriceCallback, -1)
 end
-CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_POST_PICKUP_UPDATE] = CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_POST_UPDATE] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_POST_PICKUP_UPDATE], CustomHealthAPI.Helper.AddUpdatePickupPriceCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddUpdatePickupPriceCallback)
 
 function CustomHealthAPI.Helper.RemoveUpdatePickupPriceCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, CustomHealthAPI.Mod.UpdatePickupPriceCallback)
 end
-CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_POST_PICKUP_UPDATE] = CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_POST_PICKUP_UPDATE] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_POST_PICKUP_UPDATE], CustomHealthAPI.Helper.RemoveUpdatePickupPriceCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveUpdatePickupPriceCallback)
 
 function CustomHealthAPI.Mod:UpdatePickupPriceCallback(pickup)
 	if pickup.Variant ~= PickupVariant.PICKUP_COLLECTIBLE and 

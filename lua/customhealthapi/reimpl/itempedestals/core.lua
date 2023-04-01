@@ -1,14 +1,13 @@
 function CustomHealthAPI.Helper.AddStrawmanDetectionCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_PLAYER_INIT, CustomHealthAPI.Mod.StrawmanDetectionCallback, -1)
+---@diagnostic disable-next-line: param-type-mismatch
+	Isaac.AddPriorityCallback(CustomHealthAPI.Mod, ModCallbacks.MC_POST_PLAYER_INIT, CallbackPriority.IMPORTANT, CustomHealthAPI.Mod.StrawmanDetectionCallback, -1)
 end
-CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_POST_PLAYER_INIT] = CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_POST_PLAYER_INIT] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_POST_PLAYER_INIT], CustomHealthAPI.Helper.AddStrawmanDetectionCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddStrawmanDetectionCallback)
 
 function CustomHealthAPI.Helper.RemoveStrawmanDetectionCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_POST_PLAYER_INIT, CustomHealthAPI.Mod.StrawmanDetectionCallback)
 end
-CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_POST_PLAYER_INIT] = CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_POST_PLAYER_INIT] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_POST_PLAYER_INIT], CustomHealthAPI.Helper.RemoveStrawmanDetectionCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveStrawmanDetectionCallback)
 
 function CustomHealthAPI.Mod:StrawmanDetectionCallback(player)
 	player:GetData().CustomHealthAPIPersistent = player:GetData().CustomHealthAPIPersistent or {}
@@ -16,18 +15,15 @@ function CustomHealthAPI.Mod:StrawmanDetectionCallback(player)
 end
 
 function CustomHealthAPI.Helper.AddItemPedestalCollisionCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_PRE_PICKUP_COLLISION, CustomHealthAPI.Mod.ItemPedestalCollisionCallback, PickupVariant.PICKUP_COLLECTIBLE)
+---@diagnostic disable-next-line: param-type-mismatch
+	Isaac.AddPriorityCallback(CustomHealthAPI.Mod, ModCallbacks.MC_PRE_PICKUP_COLLISION, CustomHealthAPI.Enums.CallbackPriorities.LATE, CustomHealthAPI.Mod.ItemPedestalCollisionCallback, PickupVariant.PICKUP_COLLECTIBLE)
 end
-CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_PRE_PICKUP_COLLISION] = CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_PRE_PICKUP_COLLISION] or {}
-CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_PRE_PICKUP_COLLISION][PickupVariant.PICKUP_COLLECTIBLE] = CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_PRE_PICKUP_COLLISION][PickupVariant.PICKUP_COLLECTIBLE] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToAdd[ModCallbacks.MC_PRE_PICKUP_COLLISION][PickupVariant.PICKUP_COLLECTIBLE], CustomHealthAPI.Helper.AddItemPedestalCollisionCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddItemPedestalCollisionCallback)
 
 function CustomHealthAPI.Helper.RemoveItemPedestalCollisionCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_PRE_PICKUP_COLLISION, CustomHealthAPI.Mod.ItemPedestalCollisionCallback)
 end
-CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_PRE_PICKUP_COLLISION] = CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_PRE_PICKUP_COLLISION] or {}
-CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_PRE_PICKUP_COLLISION][PickupVariant.PICKUP_COLLECTIBLE] = CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_PRE_PICKUP_COLLISION][PickupVariant.PICKUP_COLLECTIBLE] or {}
-table.insert(CustomHealthAPI.ForceEndCallbacksToRemove[ModCallbacks.MC_PRE_PICKUP_COLLISION][PickupVariant.PICKUP_COLLECTIBLE], CustomHealthAPI.Helper.RemoveItemPedestalCollisionCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveItemPedestalCollisionCallback)
 
 function CustomHealthAPI.Mod:ItemPedestalCollisionCallback(pickup, collider)
 	local collectibleConfig = Isaac.GetItemConfig():GetCollectible(pickup.SubType)
@@ -67,13 +63,22 @@ function CustomHealthAPI.Mod:ItemPedestalCollisionCallback(pickup, collider)
 			end
 			
 			local updatingPrice = false
+			local isCharacterThatConvertsMaxHealth = CustomHealthAPI.PersistentData.CharactersThatConvertMaxHealth[player:GetPlayerType()]
 			if pickup.Price == -1 then
 				--1 Red
-				CustomHealthAPI.Library.AddHealth(player, "EMPTY_HEART", -2)
+				if isCharacterThatConvertsMaxHealth then
+					CustomHealthAPI.Library.AddHealth(player, "BONE_HEART", -1)
+				else
+					CustomHealthAPI.Library.AddHealth(player, "EMPTY_HEART", -2)
+				end
 				updatingPrice = true
 			elseif pickup.Price == -2 then
 				--2 Red
-				CustomHealthAPI.Library.AddHealth(player, "EMPTY_HEART", -4)
+				if isCharacterThatConvertsMaxHealth then
+					CustomHealthAPI.Library.AddHealth(player, "BONE_HEART", -2)
+				else
+					CustomHealthAPI.Library.AddHealth(player, "EMPTY_HEART", -4)
+				end
 				updatingPrice = true
 			elseif pickup.Price == -3 then
 				--3 soul
@@ -85,13 +90,21 @@ function CustomHealthAPI.Mod:ItemPedestalCollisionCallback(pickup, collider)
 					CustomHealthAPI.Library.AddHealth(player, "SOUL_HEART", soulToRemove * -1)
 				end
 				if maxToRemove > 0 and not CustomHealthAPI.Helper.PlayerIsTheSoul(player) then
-					CustomHealthAPI.Library.AddHealth(player, "EMPTY_HEART", maxToRemove * -1)
+					if isCharacterThatConvertsMaxHealth then
+						CustomHealthAPI.Library.AddHealth(player, "BONE_HEART", math.ceil(maxToRemove / 2) * -1)
+					else
+						CustomHealthAPI.Library.AddHealth(player, "EMPTY_HEART", maxToRemove * -1)
+					end
 				end
 				
 				updatingPrice = true
 			elseif pickup.Price == -4 then
 				--1 Red, 2 Soul
-				CustomHealthAPI.Library.AddHealth(player, "EMPTY_HEART", -2)
+				if isCharacterThatConvertsMaxHealth then
+					CustomHealthAPI.Library.AddHealth(player, "BONE_HEART", -1)
+				else
+					CustomHealthAPI.Library.AddHealth(player, "EMPTY_HEART", -2)
+				end
 				CustomHealthAPI.Library.AddHealth(player, "SOUL_HEART", -4)
 				updatingPrice = true
 			elseif pickup.Price == -7 then
@@ -104,7 +117,11 @@ function CustomHealthAPI.Mod:ItemPedestalCollisionCallback(pickup, collider)
 				updatingPrice = true
 			elseif pickup.Price == -9 then
 				--1 Red, 1 Soul
-				CustomHealthAPI.Library.AddHealth(player, "EMPTY_HEART", -2)
+				if isCharacterThatConvertsMaxHealth then
+					CustomHealthAPI.Library.AddHealth(player, "BONE_HEART", -1)
+				else
+					CustomHealthAPI.Library.AddHealth(player, "EMPTY_HEART", -2)
+				end
 				CustomHealthAPI.Library.AddHealth(player, "SOUL_HEART", -2)
 				updatingPrice = true
 			end
@@ -114,18 +131,18 @@ function CustomHealthAPI.Mod:ItemPedestalCollisionCallback(pickup, collider)
 				pickup.Price = PickupPrice.PRICE_FREE
 				if CustomHealthAPI.Helper.GetTotalHP(player) == 0 then
 					if CustomHealthAPI.Helper.PlayerIsTheForgotten(player) then
-						CustomHealthAPI.PersistentData.OverriddenFunctions.AddBoneHearts(player, 1)
-						CustomHealthAPI.PersistentData.OverriddenFunctions.AddHearts(player, 2)
+						CustomHealthAPI.Helper.AddBoneHeartsKissesFix(player, 1)
+						CustomHealthAPI.Helper.AddHeartsKissesFix(player, 2)
 						pickup.Price = -1
 					elseif CustomHealthAPI.Helper.PlayerIsTheSoul(player) then
-						CustomHealthAPI.PersistentData.OverriddenFunctions.AddSoulHearts(player, 2)
+						CustomHealthAPI.Helper.AddSoulHeartsKissesFix(player, 2)
 						pickup.Price = -7
 					elseif CustomHealthAPI.PersistentData.CharactersThatConvertMaxHealth[player:GetPlayerType()] then
-						CustomHealthAPI.PersistentData.OverriddenFunctions.AddSoulHearts(player, 2)
+						CustomHealthAPI.Helper.AddSoulHeartsKissesFix(player, 2)
 						pickup.Price = -7
 					else
-						CustomHealthAPI.PersistentData.OverriddenFunctions.AddMaxHearts(player, 2)
-						CustomHealthAPI.PersistentData.OverriddenFunctions.AddHearts(player, 2)
+						CustomHealthAPI.Helper.AddMaxHeartsKissesFix(player, 2)
+						CustomHealthAPI.Helper.AddHeartsKissesFix(player, 2)
 						pickup.Price = -1
 					end
 				end
@@ -162,7 +179,7 @@ function CustomHealthAPI.Helper.HandleCollectibleHP(player, item)
 		CustomHealthAPI.Helper.UpdateBasegameHealthState(player)
 		manuallyHandleTransformations = true
 	elseif item == CollectibleType.COLLECTIBLE_BRITTLE_BONES then
-		CustomHealthAPI.Helper.HandleBrittleBones(player)
+		CustomHealthAPI.Helper.HandleBrittleBonesCollection(player)
 		CustomHealthAPI.Helper.UpdateBasegameHealthState(player)
 		manuallyHandleTransformations = true
 	elseif item == CollectibleType.COLLECTIBLE_HEARTBREAK then
@@ -253,36 +270,28 @@ function CustomHealthAPI.Helper.HandleCollectiblePickup(player)
 end
 
 function CustomHealthAPI.Helper.AddClearOnVoidCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_USE_ITEM, CustomHealthAPI.Mod.ClearOnVoidCallback, CollectibleType.COLLECTIBLE_VOID)
+	Isaac.AddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_USE_ITEM, CustomHealthAPI.Mod.ClearOnVoidCallback, CollectibleType.COLLECTIBLE_VOID)
 end
-CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM] = CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM] or {}
-CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_VOID] = CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_VOID] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_VOID], CustomHealthAPI.Helper.AddClearOnVoidCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddClearOnVoidCallback)
 
 function CustomHealthAPI.Helper.RemoveClearOnVoidCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_USE_ITEM, CustomHealthAPI.Mod.ClearOnVoidCallback)
 end
-CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM] = CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM] or {}
-CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_VOID] = CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_VOID] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_VOID], CustomHealthAPI.Helper.RemoveClearOnVoidCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveClearOnVoidCallback)
 
 function CustomHealthAPI.Mod:ClearOnVoidCallback(collectible, rng, player, useflags)
 	CustomHealthAPI.Helper.HandleItemRecycle(player)
 end
 
 function CustomHealthAPI.Helper.AddClearOnAbyssCallback()
-	CustomHealthAPI.PersistentData.OriginalAddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_USE_ITEM, CustomHealthAPI.Mod.ClearOnAbyssCallback, CollectibleType.COLLECTIBLE_ABYSS)
+	Isaac.AddCallback(CustomHealthAPI.Mod, ModCallbacks.MC_USE_ITEM, CustomHealthAPI.Mod.ClearOnAbyssCallback, CollectibleType.COLLECTIBLE_ABYSS)
 end
-CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM] = CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM] or {}
-CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_ABYSS] = CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_ABYSS] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToAdd[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_ABYSS], CustomHealthAPI.Helper.AddClearOnAbyssCallback)
+table.insert(CustomHealthAPI.CallbacksToAdd, CustomHealthAPI.Helper.AddClearOnAbyssCallback)
 
 function CustomHealthAPI.Helper.RemoveClearOnAbyssCallback()
 	CustomHealthAPI.Mod:RemoveCallback(ModCallbacks.MC_USE_ITEM, CustomHealthAPI.Mod.ClearOnAbyssCallback)
 end
-CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM] = CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM] or {}
-CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_ABYSS] = CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_ABYSS] or {}
-table.insert(CustomHealthAPI.OtherCallbacksToRemove[ModCallbacks.MC_USE_ITEM][CollectibleType.COLLECTIBLE_ABYSS], CustomHealthAPI.Helper.RemoveClearOnAbyssCallback)
+table.insert(CustomHealthAPI.CallbacksToRemove, CustomHealthAPI.Helper.RemoveClearOnAbyssCallback)
 
 function CustomHealthAPI.Mod:ClearOnAbyssCallback(collectible, rng, player, useflags)
 	CustomHealthAPI.Helper.HandleItemRecycle(player)
