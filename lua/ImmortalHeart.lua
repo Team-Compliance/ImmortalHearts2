@@ -68,6 +68,10 @@ function ComplianceImmortal.GetImmortalHeartsNum(player)
 	return CustomHealthAPI.Library.GetHPOfKey(player, "HEART_IMMORTAL")
 end
 
+function ComplianceImmortal.GetImmortalHearts(player)
+	return ComplianceImmortal.GetImmortalHeartsNum(player)
+end
+
 function ComplianceImmortal.AddImmortalHearts(player, hp)
 	CustomHealthAPI.Library.AddHealth(player, "HEART_IMMORTAL", hp)
 end
