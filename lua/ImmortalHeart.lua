@@ -113,7 +113,6 @@ function mod:ImmortalHeartCollision(pickup, collider)
 				else
 					pickup:Remove()
 					player:AnimatePickup(pickup:GetSprite(), true)
-					print(pickup.Price)
 					if pickup.Price >= 0 or pickup.Price == PickupPrice.PRICE_FREE then
 						CustomHealthAPI.Library.TriggerRestock(pickup)
 						CustomHealthAPI.Helper.TryRemoveStoreCredit(player)
