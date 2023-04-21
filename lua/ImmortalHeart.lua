@@ -99,26 +99,34 @@ function mod:ImmortalHeartCollision(pickup, collider)
 			player = player:GetMainTwin()
 		end
 		if pickup.SubType == HeartSubType.HEART_IMMORTAL then
-			if pickup:IsShopItem() and pickup.Price > 0 and player:GetNumCoins() < pickup.Price then
+			if pickup:IsShopItem() and (pickup.Price > 0 and player:GetNumCoins() < pickup.Price or not player:IsExtraAnimationFinished()) then
 				return true
 			end
 			if ComplianceImmortal.CanPickImmortalHearts(player) then
-				if player:GetPlayerType() ~= PlayerType.PLAYER_THELOST and player:GetPlayerType() ~= PlayerType.PLAYER_THELOST_B then
-					ComplianceImmortal.AddImmortalHearts(player, 2)
-				end
-				sfx:Play(immortalSfx,1,0)
 				if not pickup:IsShopItem() then
 					pickup:GetSprite():Play("Collect")
 					pickup:Die()
 				else
-					pickup:Remove()
-					player:AnimatePickup(pickup:GetSprite(), true)
-					if pickup.Price >= 0 or pickup.Price == PickupPrice.PRICE_FREE then
+					if pickup.Price >= 0 or pickup.Price == PickupPrice.PRICE_FREE or pickup.Price == PickupPrice.PRICE_SPIKES then
+						if pickup.Price == PickupPrice.PRICE_SPIKES then
+							local tookDamage = player:TakeDamage(2.0, 268435584, EntityRef(nil), 30)
+							if not tookDamage then
+								return pickup:IsShopItem()
+							end
+						end
+						if pickup.Price >= 0 then
+							player:AddCoins(-pickup.Price)
+						end
 						CustomHealthAPI.Library.TriggerRestock(pickup)
 						CustomHealthAPI.Helper.TryRemoveStoreCredit(player)
-						player:AddCoins(-pickup.Price)
+						pickup:Remove()
+						player:AnimatePickup(pickup:GetSprite(), true)
 					end
 				end
+				if player:GetPlayerType() ~= PlayerType.PLAYER_THELOST and player:GetPlayerType() ~= PlayerType.PLAYER_THELOST_B then
+					ComplianceImmortal.AddImmortalHearts(player, 2)
+				end
+				sfx:Play(immortalSfx,1,0)
 				if pickup.OptionsPickupIndex ~= 0 then
 					local pickups = Isaac.FindByType(EntityType.ENTITY_PICKUP)
 					for _, entity in ipairs(pickups) do
@@ -132,8 +140,13 @@ function mod:ImmortalHeartCollision(pickup, collider)
 				end
 				return true
 			else
+				if pickup:IsShopItem() and pickup.Price == PickupPrice.PRICE_SPIKES and player:GetDamageCooldown() <= 0 then
+					player:TakeDamage(2.0, 268435584, EntityRef(nil), 30)
+				end
 				return pickup:IsShopItem()
 			end
+		else
+		
 		end
 	end
 end
