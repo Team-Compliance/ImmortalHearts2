@@ -91,24 +91,49 @@ function ComplianceImmortal.HealImmortalHeart(player) -- returns true if success
 	return false
 end
 
-function mod:ImmortalHeartCollision(entity, collider)
+function mod:ImmortalHeartCollision(pickup, collider)
 	if collider.Type == EntityType.ENTITY_PLAYER then
 		local player = collider:ToPlayer()
-		if player.Parent ~= nil then return entity:IsShopItem() end
+		if player.Parent ~= nil then return pickup:IsShopItem() end
 		if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B then
 			player = player:GetMainTwin()
 		end
-		if ComplianceImmortal.CanPickImmortalHearts(player) then
-			if entity.SubType == HeartSubType.HEART_IMMORTAL then
+		if pickup.SubType == HeartSubType.HEART_IMMORTAL then
+			if pickup:IsShopItem() and pickup.Price > 0 and player:GetNumCoins() < pickup.Price then
+				return true
+			end
+			if ComplianceImmortal.CanPickImmortalHearts(player) then
 				if player:GetPlayerType() ~= PlayerType.PLAYER_THELOST and player:GetPlayerType() ~= PlayerType.PLAYER_THELOST_B then
 					ComplianceImmortal.AddImmortalHearts(player, 2)
 				end
-				entity.Velocity = Vector.Zero
-				entity.EntityCollisionClass = EntityCollisionClass.ENTCOLL_NONE
-				entity:GetSprite():Play("Collect", true)
-				entity:Die()
 				sfx:Play(immortalSfx,1,0)
+				if not pickup:IsShopItem() then
+					pickup:GetSprite():Play("Collect")
+					pickup:Die()
+				else
+					pickup:Remove()
+					player:AnimatePickup(pickup:GetSprite(), true)
+					print(pickup.Price)
+					if pickup.Price >= 0 or pickup.Price == PickupPrice.PRICE_FREE then
+						CustomHealthAPI.Library.TriggerRestock(pickup)
+						CustomHealthAPI.Helper.TryRemoveStoreCredit(player)
+						player:AddCoins(-pickup.Price)
+					end
+				end
+				if pickup.OptionsPickupIndex ~= 0 then
+					local pickups = Isaac.FindByType(EntityType.ENTITY_PICKUP)
+					for _, entity in ipairs(pickups) do
+						if entity:ToPickup().OptionsPickupIndex == pickup.OptionsPickupIndex and
+						(entity.Index ~= pickup.Index or entity.InitSeed ~= pickup.InitSeed)
+						then
+							Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, entity.Position, Vector.Zero, nil)
+							entity:Remove()
+						end
+					end
+				end
 				return true
+			else
+				return pickup:IsShopItem()
 			end
 		end
 	end
@@ -174,7 +199,8 @@ mod:AddCallback(ModCallbacks.MC_PRE_SPAWN_CLEAN_AWARD, mod.ImmortalHeal)
 
 local grng = RNG()
 function mod:PreEternalSpawn(id, var, subtype, pos, vel, spawner, seed)
-	if id == EntityType.ENTITY_PICKUP and var == PickupVariant.PICKUP_HEART and subtype == HeartSubType.HEART_ETERNAL then
+	if id == EntityType.ENTITY_PICKUP and var == PickupVariant.PICKUP_HEART and subtype == HeartSubType.HEART_ETERNAL and not mod.savedata.Pickups[tostring(seed)] then
+		mod.savedata.Pickups[tostring(seed)] = true
 		grng:SetSeed(seed, 0)
 		if grng:RandomFloat() >= (1 - mod.optionChance / 100) then
 			return {id, var, HeartSubType.HEART_IMMORTAL, seed }
