@@ -65,6 +65,9 @@ CustomHealthAPI.Library.AddCallback("ComplianceImmortal", CustomHealthAPI.Enums.
 end)
 
 function ComplianceImmortal.GetImmortalHeartsNum(player)
+	if player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN then
+		player = player:GetSubPlayer()
+	end
 	return CustomHealthAPI.Library.GetHPOfKey(player, "HEART_IMMORTAL")
 end
 
