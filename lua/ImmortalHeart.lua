@@ -164,6 +164,11 @@ function mod:ActOfImmortal(player)
 	if not player:HasCollectible(CollectibleType.COLLECTIBLE_ACT_OF_CONTRITION) then return end
 	if mod.optionContrition ~= 1 then return end
 	local data = mod:GetEntityData(player)
+	local GetHp = CustomHealthAPI.PersistentData.OverriddenFunctions.GetEffectiveMaxHearts
+	if CustomHealthAPI.PersistentData.CharactersThatCantHaveRedHealth[player:GetPlayerType()] or 
+	player:GetPlayerType() == PlayerType.PLAYER_THESOUL then
+		GetHp = CustomHealthAPI.PersistentData.OverriddenFunctions.GetSoulHearts
+	end
 	if not data.lastEternalHearts or not data.lastMaxHearts then
 		data.lastEternalHearts = 0
 		data.lastMaxHearts = 0
@@ -171,13 +176,10 @@ function mod:ActOfImmortal(player)
 	if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B then
 		player = player:GetMainTwin()
 	end
-	if player:GetPlayerType() == PlayerType.PLAYER_THEFORGOTTEN then
-		player = player:GetSubPlayer()
-	end
 	
 	if player:GetCollectibleNum(CollectibleType.COLLECTIBLE_ACT_OF_CONTRITION) == data.ContritionCount then
 		data.lastEternalHearts = player:GetEternalHearts()
-		data.lastMaxHearts = player:GetMaxHearts()
+		data.lastMaxHearts = GetHp(player)
 	end
 	data.ContritionCount = player:GetCollectibleNum(CollectibleType.COLLECTIBLE_ACT_OF_CONTRITION)
 	
@@ -186,7 +188,7 @@ function mod:ActOfImmortal(player)
 		player:AddEternalHearts(-1)
 		
 		ComplianceImmortal.AddImmortalHearts(player, 2)
-	elseif player:GetMaxHearts() > data.lastMaxHearts then
+	elseif GetHp(player) > data.lastMaxHearts then
 		player:AddMaxHearts(-2) -- still plays the eternal heart animation but its the best we can do right now
 		
 		ComplianceImmortal.AddImmortalHearts(player, 2)
