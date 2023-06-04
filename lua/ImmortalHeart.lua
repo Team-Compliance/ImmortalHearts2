@@ -98,62 +98,69 @@ local function IsLost(player)
 	return player:GetPlayerType() == PlayerType.PLAYER_THELOST or player:GetPlayerType() == PlayerType.PLAYER_THELOST_B
 end
 
-function mod:ImmortalHeartCollision(pickup, collider)
-	if collider.Type == EntityType.ENTITY_PLAYER then
-		local player = collider:ToPlayer()
-		if player:GetPlayerType() == PlayerType.PLAYER_THESOUL_B then
-			player = player:GetMainTwin()
+function mod:CanCollectCustomShopPickup(player, pickup)
+	if pickup:IsShopItem() and (pickup.Price > 0 and player:GetNumCoins() < pickup.Price or not player:IsExtraAnimationFinished())  then
+		return false
+	end
+	return true
+end
+
+function mod:CollectCustomPickup(player,pickup)
+	if not pickup:IsShopItem() then
+		pickup:GetSprite():Play("Collect")
+		pickup:Die()
+	else
+		if pickup.Price >= 0 or pickup.Price == PickupPrice.PRICE_FREE or pickup.Price == PickupPrice.PRICE_SPIKES then
+			if pickup.Price == PickupPrice.PRICE_SPIKES and not IsLost(player) then
+				local tookDamage = player:TakeDamage(2.0, 268435584, EntityRef(nil), 30)
+				if not tookDamage then
+					return pickup:IsShopItem()
+				end
+			end
+			if pickup.Price >= 0 then
+				player:AddCoins(-pickup.Price)
+			end
+			CustomHealthAPI.Library.TriggerRestock(pickup)
+			CustomHealthAPI.Helper.TryRemoveStoreCredit(player)
+			pickup:Remove()
+			player:AnimatePickup(pickup:GetSprite(), true)
 		end
-		if pickup.SubType == HeartSubType.HEART_IMMORTAL then
-			if player.Parent ~= nil then return pickup:IsShopItem() end
-			if pickup:IsShopItem() and (pickup.Price > 0 and player:GetNumCoins() < pickup.Price or not player:IsExtraAnimationFinished()) then
-				return true
+	end
+	if pickup.OptionsPickupIndex ~= 0 then
+		local pickups = Isaac.FindByType(EntityType.ENTITY_PICKUP)
+		for _, entity in ipairs(pickups) do
+			if entity:ToPickup().OptionsPickupIndex == pickup.OptionsPickupIndex and
+			(entity.Index ~= pickup.Index or entity.InitSeed ~= pickup.InitSeed)
+			then
+				Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, entity.Position, Vector.Zero, nil)
+				entity:Remove()
 			end
-			if ComplianceImmortal.CanPickImmortalHearts(player) then
-				if not pickup:IsShopItem() then
-					pickup:GetSprite():Play("Collect")
-					pickup:Die()
-				else
-					if pickup.Price >= 0 or pickup.Price == PickupPrice.PRICE_FREE or pickup.Price == PickupPrice.PRICE_SPIKES then
-						if pickup.Price == PickupPrice.PRICE_SPIKES and not IsLost(player) then
-							local tookDamage = player:TakeDamage(2.0, 268435584, EntityRef(nil), 30)
-							if not tookDamage then
-								return pickup:IsShopItem()
-							end
-						end
-						if pickup.Price >= 0 then
-							player:AddCoins(-pickup.Price)
-						end
-						CustomHealthAPI.Library.TriggerRestock(pickup)
-						CustomHealthAPI.Helper.TryRemoveStoreCredit(player)
-						pickup:Remove()
-						player:AnimatePickup(pickup:GetSprite(), true)
-					end
-				end
-				if not IsLost(player) then
-					ComplianceImmortal.AddImmortalHearts(player, 2)
-				end
-				sfx:Play(immortalSfx,1,0)
-				if pickup.OptionsPickupIndex ~= 0 then
-					local pickups = Isaac.FindByType(EntityType.ENTITY_PICKUP)
-					for _, entity in ipairs(pickups) do
-						if entity:ToPickup().OptionsPickupIndex == pickup.OptionsPickupIndex and
-						(entity.Index ~= pickup.Index or entity.InitSeed ~= pickup.InitSeed)
-						then
-							Isaac.Spawn(EntityType.ENTITY_EFFECT, EffectVariant.POOF01, 0, entity.Position, Vector.Zero, nil)
-							entity:Remove()
-						end
-					end
-				end
-				return true
-			else
-				if pickup:IsShopItem() and pickup.Price == PickupPrice.PRICE_SPIKES and player:GetDamageCooldown() <= 0 then
-					player:TakeDamage(2.0, 268435584, EntityRef(nil), 30)
-				end
-				return pickup:IsShopItem()
+		end
+	end
+	return nil
+end
+
+function mod:ImmortalHeartCollision(pickup, collider)
+	if collider.Type == EntityType.ENTITY_PLAYER and pickup.SubType == HeartSubType.HEART_IMMORTAL then
+		local player = collider:ToPlayer()
+		if not mod:CanCollectCustomShopPickup(player, pickup) then
+			return true
+		end
+		if ComplianceImmortal.CanPickImmortalHearts(player) then
+			local collect = mod:CollectCustomPickup(player,pickup)
+			if collect ~= nil then
+				return collect
 			end
+			if not IsLost(player) then
+				ComplianceImmortal.AddImmortalHearts(player, 2)
+			end
+			sfx:Play(immortalSfx,1,0)
+			game:GetLevel():SetHeartPicked()
+			game:ClearStagesWithoutHeartsPicked()
+			game:SetStateFlag(GameStateFlag.STATE_HEART_BOMB_COIN_PICKED, true)
+			return true
 		else
-		
+			return pickup:IsShopItem()
 		end
 	end
 end
