@@ -54,7 +54,6 @@ end
 
 local scriptList = {
 	"customhealthapi.core",
-	"ModConfigMenu",
 	"ImmortalHeart",
 	"ImmortalClot",
 	"deadseascrolls",

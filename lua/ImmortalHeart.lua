@@ -247,16 +247,16 @@ function mod:SpriteChange(entity)
 		if mod.optionNum == 3 then
 			spritename = spritename.."_peas"
 		end
-		if mod.optionNum == 6 then
+		if mod.optionNum == 5 then
 			spritename = spritename.."_flashy"
 		end
-		if mod.optionNum == 7 then
+		if mod.optionNum == 6 then
 			spritename = spritename.."_bettericons"
 		end
-		if mod.optionNum == 9 then
+		if mod.optionNum == 8 then
 			spritename = spritename.."_duxi"
 		end
-		if mod.optionNum == 10 then
+		if mod.optionNum == 9 then
 			spritename = spritename.."_sussy" 
 		end
 		spritename = spritename..".png"

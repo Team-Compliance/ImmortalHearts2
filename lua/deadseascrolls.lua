@@ -135,7 +135,6 @@ local ihdir = {
                     "aladar",
                     "lifebar",
                     "beautiful",
-                    "goncholito",
                     "flashy", 
                     "better icons", 
                     "eternal update",
@@ -169,19 +168,16 @@ local ihdir = {
                     if mod.optionNum == 4 then
                         animfile = animfile.."_beautiful"
                     end
-                    if mod.optionNum == 5 then 
-                        animfile = animfile.."_goncholito"
-                    end
-                    if mod.optionNum == 6 then
+                    if mod.optionNum == 5 then
                         animfile = animfile.."_flashy"
                     end
-                    if mod.optionNum == 7 then
+                    if mod.optionNum == 6 then
                         animfile = animfile.."_bettericons"
                     end
-                    if mod.optionNum == 8 then
+                    if mod.optionNum == 7 then
                         animfile = animfile.."_eternalupdate"
                     end
-                    if mod.optionNum == 9 then
+                    if mod.optionNum == 8 then
                         animfile = animfile.."_duxi"
                     end
                     
