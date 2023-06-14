@@ -68,29 +68,31 @@ mod:AddCallback(ModCallbacks.MC_POST_FAMILIAR_RENDER, mod.StaticHP, 238)
 
 --SPAWNING
 --t eve's ability
-function mod:ImmortalClotSpawn(baby)
-	local player = baby.Player
-	if baby.SubType == 20 then
-		if  ComplianceImmortal.GetImmortalHeartsNum(player) % 2 == 0 then
-			SFXManager():Play(Isaac.GetSoundIdByName("ImmortalHeartBreak"),1,0)
-			local shatterSPR = Isaac.Spawn(EntityType.ENTITY_EFFECT, 904, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect():GetSprite()
-			shatterSPR.PlaybackSpeed = 2
-		end
-		local clot
-		for _, s_clot in ipairs(Isaac.FindByType(3,238,20)) do
-			s_clot = s_clot:ToFamiliar()
-			if GetPtrHash(s_clot.Player) == GetPtrHash(player) and GetPtrHash(baby) ~= GetPtrHash(s_clot) then
-				clot = s_clot
-				break
+
+CustomHealthAPI.Library.AddCallback("ComplianceImmortal", CustomHealthAPI.Enums.Callbacks.POST_SUMPTORIUM_CLOT_INIT, 0, function(familiar, key)
+	if key == "HEART_IMMORTAL" then
+		local player = familiar.Player
+		if player then
+			if  ComplianceImmortal.GetImmortalHeartsNum(player) % 2 == 0 then
+				SFXManager():Play(Isaac.GetSoundIdByName("ImmortalHeartBreak"),1,0)
+				local shatterSPR = Isaac.Spawn(EntityType.ENTITY_EFFECT, 904, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect():GetSprite()
+				shatterSPR.PlaybackSpeed = 2
+			end
+			local clot
+			for _, s_clot in ipairs(Isaac.FindByType(3,238,20)) do
+				s_clot = s_clot:ToFamiliar()
+				if GetPtrHash(s_clot.Player) == GetPtrHash(player) and GetPtrHash(familiar) ~= GetPtrHash(s_clot) then
+					clot = s_clot
+					break
+				end
+			end
+			if clot ~= nil and clot.InitSeed ~= familiar.InitSeed then
+				local clotData = clot:GetData()
+				clotData.TC_HP = clotData.TC_HP + 1
+				local ImmortalEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, 903, 0, clot.Position + Vector(0, 1), Vector.Zero, nil):ToEffect()
+				ImmortalEffect:GetSprite().Offset = Vector(0, -10)
+				familiar:Remove()
 			end
 		end
-		if clot ~= nil then
-			local clotData = clot:GetData()
-			clotData.TC_HP = clotData.TC_HP + 1
-			local ImmortalEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, 903, 0, clot.Position + Vector(0, 1), Vector.Zero, nil):ToEffect()
-			ImmortalEffect:GetSprite().Offset = Vector(0, -10)
-			baby:Remove()
-		end
 	end
-end
-mod:AddCallback(ModCallbacks.MC_FAMILIAR_INIT, mod.ImmortalClotSpawn, 238)
+end)
