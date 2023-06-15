@@ -85,7 +85,7 @@ end
 
 function ComplianceImmortal.HealImmortalHeart(player) -- returns true if successful
 	if ComplianceImmortal.GetImmortalHeartsNum(player) > 0 and ComplianceImmortal.GetImmortalHeartsNum(player) % 2 ~= 0 then
-		ImmortalEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, 903, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect()
+		local ImmortalEffect = Isaac.Spawn(EntityType.ENTITY_EFFECT, 903, 0, player.Position + Vector(0, 1), Vector.Zero, nil):ToEffect()
 		ImmortalEffect:GetSprite().Offset = Vector(0, -22)
 		sfx:Play(immortalSfx,1,0)
 		ComplianceImmortal.AddImmortalHearts(player, 1)
