@@ -264,6 +264,80 @@ local ihdirkey = {
     Path = {},
 }
 
+--#region AgentCucco pause manager for DSS
+
+local OldTimer
+local OldTimerBossRush
+local OldTimerHush
+local OverwrittenPause = false
+local AddedPauseCallback = false
+local function OverridePause(self, player, hook, action)
+	if not AddedPauseCallback then return nil end
+
+	if OverwrittenPause then
+		OverwrittenPause = false
+		AddedPauseCallback = false
+		return
+	end
+
+	if action == ButtonAction.ACTION_SHOOTRIGHT then
+		OverwrittenPause = true
+		for _, ember in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.FALLING_EMBER, -1)) do
+			if ember:Exists() then
+				ember:Remove()
+			end
+		end
+		if REPENTANCE then
+			for _, rain in ipairs(Isaac.FindByType(EntityType.ENTITY_EFFECT, EffectVariant.RAIN_DROP, -1)) do
+				if rain:Exists() then
+					rain:Remove()
+				end
+			end
+		end
+		return 0.75
+	end
+end
+ComplianceImmortal:AddCallback(ModCallbacks.MC_INPUT_ACTION, OverridePause, InputHook.IS_ACTION_PRESSED)
+
+local function FreezeGame(unfreeze)
+	if unfreeze then
+		OldTimer = nil
+        OldTimerBossRush = nil
+        OldTimerHush = nil
+        if not AddedPauseCallback then
+			AddedPauseCallback = true
+		end
+	else
+		if not OldTimer then
+			OldTimer = Game().TimeCounter
+		end
+        if not OldTimerBossRush then
+            OldTimerBossRush = Game().BossRushParTime
+		end
+        if not OldTimerHush then
+			OldTimerHush = Game().BlueWombParTime
+		end
+		
+        Isaac.GetPlayer(0):UseActiveItem(CollectibleType.COLLECTIBLE_PAUSE, UseFlag.USE_NOANIM)
+		
+		Game().TimeCounter = OldTimer
+		Game().BossRushParTime = OldTimerBossRush
+		Game().BlueWombParTime = OldTimerHush
+	end
+end
+
+local function RunDSSMenu(tbl)
+    FreezeGame()
+    dssmod.runMenu(tbl)
+end
+
+local function CloseDSSMenu(tbl, fullClose, noAnimate)
+    FreezeGame(true)
+    dssmod.closeMenu(tbl, fullClose, noAnimate)
+end
+
+--#endregion
+
 DeadSeaScrollsMenu.AddMenu("Immortal Hearts", {
     -- The Run, Close, and Open functions define the core loop of your menu
     -- Once your menu is opened, all the work is shifted off to your mod running these functions, so each mod can have its own independently functioning menu.
@@ -272,11 +346,11 @@ DeadSeaScrollsMenu.AddMenu("Immortal Hearts", {
     -- But, if you did want a completely custom menu, this would be the way to do it!
     
     -- This function runs every render frame while your menu is open, it handles everything! Drawing, inputs, etc.
-    Run = dssmod.runMenu,
+    Run = RunDSSMenu,
     -- This function runs when the menu is opened, and generally initializes the menu.
     Open = dssmod.openMenu,
     -- This function runs when the menu is closed, and generally handles storing of save data / general shut down.
-    Close = dssmod.closeMenu,
+    Close = CloseDSSMenu,
 
     Directory = ihdir,
     DirectoryKey = ihdirkey
