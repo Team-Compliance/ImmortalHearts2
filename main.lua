@@ -5,7 +5,8 @@ local json = require("json")
 
 HeartSubType.HEART_IMMORTAL = 902
 
-mod.savedata = {DataTable = {},CustomHealthAPISave = nil, DSS = {}, Pickups = {}}
+mod.savedata = {DataTable = {}, DSS = {}, Pickups = {}}
+mod.savedata.CustomHealthAPISave = mod.savedata.CustomHealthAPISave or {}
 
 if EID then
 	EID:setModIndicatorName("Immortal Heart")
@@ -79,11 +80,12 @@ function mod:OnSave(isSaving)
 		save.PlayerData = mod.savedata.DataTable
 		save.Pickups = mod.savedata.Pickups
 	end
+	CustomHealthAPI.Helper.SaveData(isSaving)
+	save.CustomHealthAPISave = mod.savedata.CustomHealthAPISave
 	save.DSS = mod.savedata.DSS
 	save.SpriteStyle = mod.optionNum
 	save.AppearanceChance = mod.optionChance
 	save.ActOfContrition = mod.optionContrition
-	save.showAchievement = true
 	mod:SaveData(json.encode(save))
 end
 mod:AddCallback(ModCallbacks.MC_PRE_GAME_EXIT, mod.OnSave)
@@ -102,12 +104,15 @@ function mod:GetLoadData(isLoading)
 			mod.savedata.DataTable = {}
 			mod.savedata.Pickups = {}
 		end
-
+		
+		mod.savedata.CustomHealthAPISave = save.CustomHealthAPISave or {}
+		CustomHealthAPI.Helper.LoadData()
 		mod.savedata.DSS = save.DSS and save.DSS or {}
 		mod.optionNum = save.SpriteStyle and save.SpriteStyle or 1
 		mod.optionChance = save.AppearanceChance and save.AppearanceChance or 50
 		mod.optionContrition = save.ActOfContrition and save.ActOfContrition or 1
 	else
+		mod.savedata.CustomHealthAPISave = {}
 		mod.savedata.DataTable = {}
 		mod.savedata.Pickups = {}
 		mod.optionNum = 1

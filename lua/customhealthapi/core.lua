@@ -1,4 +1,4 @@
-local version = 0.949
+local version = 0.951
 
 local root = "lua.customhealthapi."
 local modname = "Custom Health API (Compliance Immortal)"
